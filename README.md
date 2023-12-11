@@ -110,7 +110,7 @@ public async Task<bool> ExpireKeyAsync()
 
 public async Task<double> IncrementNumberAsync() 
 {
-    JsonCommands json = _redis.Db.JSON();
+    JsonCommands json = _redis.Json;
 
     return await json.NumberIncrbyAsync("key", "$.number", 1.2);
 }
