@@ -12,22 +12,6 @@ public sealed partial record RedisClient
 {
     public JsonCommands Json => Db.JSON();
 
-    //private readonly JsonSerializerOptions SerializerOptions = new()
-    //{
-    //    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
-    //    ReferenceHandler = ReferenceHandler.IgnoreCycles,
-    //    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    //    PropertyNameCaseInsensitive = true,
-    //    Converters =
-    //    {
-    //        // TODO: Implement a 'proper' way to retrieve these dynamically
-    //        // from DI as the user may also have provided custom converters.
-
-    //        new JsonStringEnumConverter(),
-    //        new AuthenticationTicketJsonConverter()
-    //    }
-    //};
-
     public Task<T?> GetFromJsonAsync<T>(string key)
     {
         if (key is null) throw new ArgumentNullException(nameof(key));
