@@ -1,0 +1,50 @@
+name: Release & Package
+
+# This workflow will build, test and package the library
+# after any published released from a tagged branch.
+
+# This should always be triggered after a merged Pull Request
+# due to the branch protection rules in place.
+
+on:
+  release:
+    types: [ published ]
+
+# 'github.ref_name' will be tag in the event of a release e.g. v1.2.3
+# Further down we use the :1 to substring and remove the 'v' as NuGet doesn't like it.
+
+env:
+  RELEASE_VERSION: ${{ github.ref_name }}
+
+jobs:
+  package:
+    name: Release and Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Add NuGet feed
+      run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/melittleman/index.json"
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release /p:Version=${RELEASE_VERSION:1} --no-restore
+
+    - name: Test
+      run: dotnet test --configuration Release /p:Version=${RELEASE_VERSION:1} --no-build
+
+    - name: Pack
+      run: dotnet pack --configuration Release /p:Version=${RELEASE_VERSION:1} --no-build --output .
+
+    - name: Push
+      run: dotnet nuget push **/*.nupkg --source "github"
+        

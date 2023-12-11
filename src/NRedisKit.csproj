@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+	
+    <PackageId>NRedisKit</PackageId>
+    <PackageDescription>.NET Standard 2.1 Redis client helper library.</PackageDescription>
+    <PackageTags>redis,netstandard,dotnet,melittleman</PackageTags>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/melittleman/NRedisKit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/melittleman/NRedisKit</RepositoryUrl>
+	
+    <Title>NRedisKit</Title>
+    <Authors>melittleman</Authors>
+    <Description>.NET Standard 2.1 Redis client helper library.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>  
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.1.34" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="6.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="6.0.14" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+
+	<PackageReference Include="IdentityModel" Version="6.0.0" />
+    <PackageReference Include="NRedisStack" Version="0.10.1" />
+    <PackageReference Include="StackExchange.Redis" Version="2.6.122" />
+    <PackageReference Include="System.Text.Json" Version="7.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<InternalsVisibleTo Include="NRedisKit.UnitTest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

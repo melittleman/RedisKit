@@ -1,0 +1,42 @@
+name: Build & Test
+
+# Run this dotnet build with all Unit and Integration tests
+# on every single push to the repository, regardless of branch.
+
+# There must also be at least one change to:
+# - source code
+# - test code
+# - this workflow
+
+on:
+  push:
+    paths:
+    - "src/**"
+    - "test/**"
+    - ".github/workflows/build-test.yml"
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Add NuGet feed
+      run: dotnet nuget add source --username USERNAME --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/melittleman/index.json"
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --no-restore
+
+    - name: Test
+      run: dotnet test --no-build --verbosity normal
