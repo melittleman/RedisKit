@@ -14,7 +14,7 @@ internal static class RedisValueExtensions
 
             DateTime time => time.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture), // ISO 8601 w/ UTC Time-Zone
 
-            _ => property?.ToString() ?? RedisValue.EmptyString
+            _ => Convert.ToString(property, CultureInfo.InvariantCulture) ?? RedisValue.EmptyString
         };
     }
 
@@ -24,6 +24,6 @@ internal static class RedisValueExtensions
 
         if (value.IsNull) return null;
 
-        return value.ToString()?.ChangeType(propertyType);
+        return Convert.ToString(value, CultureInfo.InvariantCulture)?.ChangeType(propertyType);
     }
 }
