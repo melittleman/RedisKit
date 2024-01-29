@@ -78,4 +78,43 @@ internal static class StringExtensions
         value = source;
         return false;
     }
+
+    public static string EscapeSpecialCharacters(this string source)
+    {
+        // See: https://redis.io/docs/interact/search-and-query/advanced-concepts/escaping/
+        // ",.<>{}[]\"':;!@#$%^&*()-+=~ ";
+
+        // TODO: There seems to be a lot of dispute as to the fastest way to achieve string replacements between:
+        // string.Replace(), StringBuilder.Replace() and Regex.Replace().
+        // See: https://stackoverflow.com/questions/11899668/replacing-multiple-characters-in-a-string-the-fastest-way
+
+        return source
+            .Replace(",", "\\,")
+            .Replace(".", "\\.")
+            .Replace("<", "\\<")
+            .Replace(">", "\\>")
+            .Replace("{", "\\{")
+            .Replace("}", "\\}")
+            .Replace("[", "\\[")
+            .Replace("]", "\\]")
+            .Replace("\"", "\\\"")
+            .Replace("'", "\\'")
+            .Replace(":", "\\:")
+            .Replace(";", "\\;")
+            .Replace("!", "\\!")
+            .Replace("@", "\\@")
+            .Replace("#", "\\#")
+            .Replace("$", "\\$")
+            .Replace("%", "\\%")
+            .Replace("^", "\\^")
+            .Replace("&", "\\&")
+            .Replace("*", "\\*")
+            .Replace("(", "\\(")
+            .Replace(")", "\\)")
+            .Replace("-", "\\-")
+            .Replace("+", "\\+")
+            .Replace("=", "\\=")
+            .Replace("~", "\\~")
+            .Replace(" ", "\\ ");
+    }
 }
