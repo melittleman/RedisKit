@@ -2,9 +2,9 @@
 
 namespace NRedisKit.Extensions;
 
-internal static class StringExtensions
+public static class StringExtensions
 {
-    public static object? ChangeType(this string source, Type type)
+    internal static object? ChangeType(this string source, Type type)
     {
         // Try to 'Parse' the value into Type first as this will be
         // more better for performance due to not requiring any boxing.
@@ -17,7 +17,7 @@ internal static class StringExtensions
             : default;
     }
 
-    private static bool TryGetStructOrEnum(this string source, Type type, out object value)
+    public static bool TryGetStructOrEnum(this string source, Type type, out object value)
     {
         if (type == typeof(Guid)) return source.TryGetGuid(out value);
 
@@ -31,7 +31,7 @@ internal static class StringExtensions
         return false;
     }
 
-    private static bool TryGetGuid(this string source, out object value)
+    public static bool TryGetGuid(this string source, out object value)
     {
         if (Guid.TryParse(source, out Guid result))
         {

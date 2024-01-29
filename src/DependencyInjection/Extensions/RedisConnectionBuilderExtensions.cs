@@ -9,6 +9,9 @@ using Microsoft.AspNetCore.DataProtection.StackExchangeRedis;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
+using OpenTelemetry.Trace;
+using OpenTelemetry.Instrumentation.StackExchangeRedis;
+
 using NRedisKit.Diagnostics;
 using NRedisKit.Authentication;
 using NRedisKit.Messaging;
@@ -166,7 +169,7 @@ public static class RedisConnectionBuilderExtensions
     /// </param>
     /// <returns>The modified <see cref="IRedisConnectionBuilder" /> to be further chained to.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
-    public static IRedisConnectionBuilder AddHealthCheck(this IRedisConnectionBuilder builder)
+    public static IRedisConnectionBuilder AddRedisHealthCheck(this IRedisConnectionBuilder builder)
     {
         if (builder is null) throw new ArgumentNullException(nameof(builder));
 
@@ -229,6 +232,23 @@ public static class RedisConnectionBuilderExtensions
         // TODO: Investigate how this could work to have multiple 'keyed' Producers in one application?
         builder.Services.TryAddKeyedTransient(typeof(IMessageProducer<>), builder.Name, typeof(RedisStreamsProducer<>));
         builder.Services.TryAddTransient(typeof(IMessageProducer<>), typeof(RedisStreamsProducer<>));
+
+        return builder;
+    }
+
+    public static IRedisConnectionBuilder AddRedisOpenTelemetry(
+        this IRedisConnectionBuilder builder,
+        Action<StackExchangeRedisInstrumentationOptions> configure)
+    {
+        if (builder is null) throw new ArgumentNullException(nameof(builder));
+
+        builder.Services.AddOpenTelemetry().WithTracing(b => b.AddRedisInstrumentation($"Redis:{builder.Name}", null, configure).ConfigureRedisInstrumentation((s, i) =>
+        {
+            IRedisConnectionProvider provider = s.GetRequiredService<IRedisConnectionProvider>();
+            IRedisContext context = provider.GetRequiredConnection(builder.Name);
+            
+            i.AddConnection(context.Connection);
+        }));
 
         return builder;
     }
