@@ -106,7 +106,7 @@ public static class RedisConnectionBuilderExtensions
             return new RedisTicketStore(context, options);
         });
 
-        builder.Services.AddOptions<CookieAuthenticationOptions>(options.CookieSchemeName).Configure<RedisTicketStore>((options, store) =>
+        builder.Services.AddOptions<CookieAuthenticationOptions>(options.CookieSchemeName).Configure<ITicketStore>((options, store) =>
         {
             options.SessionStore = store;
         });
