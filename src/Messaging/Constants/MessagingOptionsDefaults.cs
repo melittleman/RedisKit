@@ -1,4 +1,4 @@
-﻿namespace NRedisKit.Messaging.Constants;
+﻿namespace RedisKit.Messaging.Constants;
 
 internal static class MessagingOptionsDefaults
 {

@@ -3,7 +3,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
-namespace NRedisKit.DependencyInjection.Extensions;
+namespace RedisKit.DependencyInjection.Extensions;
 
 public static class ServiceCollectionExtensions
 {

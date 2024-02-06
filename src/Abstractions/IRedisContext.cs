@@ -1,4 +1,4 @@
-﻿namespace NRedisKit.Abstractions;
+﻿namespace RedisKit.Abstractions;
 
 /// <summary>
 ///     <para>The Redis connection context.</para>

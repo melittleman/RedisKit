@@ -1,7 +1,7 @@
-﻿using NRedisKit.Extensions;
+﻿using RedisKit.Extensions;
 using StackExchange.Redis;
 
-namespace NRedisKit.UnitTest;
+namespace RedisKit.UnitTest;
 
 public sealed partial class RedisClientTests
 {

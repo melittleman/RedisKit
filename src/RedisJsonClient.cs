@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using NRedisStack;
 using NRedisStack.RedisStackCommands;
 
-namespace NRedisKit;
+namespace RedisKit;
 
 /// <inheritdoc />
 public sealed partial record RedisClient

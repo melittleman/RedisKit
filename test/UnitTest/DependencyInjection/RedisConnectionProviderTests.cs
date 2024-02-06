@@ -2,10 +2,10 @@
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 
-using NRedisKit.DependencyInjection;
-using NRedisKit.DependencyInjection.Options;
+using RedisKit.DependencyInjection;
+using RedisKit.DependencyInjection.Options;
 
-namespace NRedisKit.UnitTest.DependencyInjection;
+namespace RedisKit.UnitTest.DependencyInjection;
 
 public sealed class RedisConnectionProviderTests
 {

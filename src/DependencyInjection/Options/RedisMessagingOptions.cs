@@ -1,4 +1,4 @@
-﻿namespace NRedisKit.DependencyInjection.Options;
+﻿namespace RedisKit.DependencyInjection.Options;
 
 // TODO: We may eventually need to look at creating specific options
 // betwee Producers and Consumers as currently they both use the same IOptions

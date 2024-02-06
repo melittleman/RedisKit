@@ -1,7 +1,7 @@
-﻿using NRedisKit.Querying.Enums;
+﻿using RedisKit.Querying.Enums;
 using System.Text.Json.Serialization;
 
-namespace NRedisKit.Querying;
+namespace RedisKit.Querying;
 
 public sealed record SearchFilter
 {

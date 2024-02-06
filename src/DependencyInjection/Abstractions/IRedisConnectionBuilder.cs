@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace NRedisKit.DependencyInjection.Abstractions;
+namespace RedisKit.DependencyInjection.Abstractions;
 
 /// <summary>
 ///     A fluent helper when building Redis connections that

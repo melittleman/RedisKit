@@ -1,4 +1,4 @@
-﻿namespace NRedisKit.DependencyInjection.Abstractions;
+﻿namespace RedisKit.DependencyInjection.Abstractions;
 
 public interface IRedisClientFactory
 {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace NRedisKit;
+namespace RedisKit;
 
 /// <summary>
 ///     Reprents a wrapper around a named <see cref="RedisContext" /> that provides

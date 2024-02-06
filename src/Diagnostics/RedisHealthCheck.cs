@@ -3,7 +3,7 @@ using System.Threading;
 
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 
-namespace NRedisKit.Diagnostics;
+namespace RedisKit.Diagnostics;
 
 /// <inheritdoc />
 internal sealed record RedisHealthCheck : IHealthCheck

@@ -3,10 +3,10 @@
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging.Abstractions;
 
-using NRedisKit.Messaging.Abstractions;
-using NRedisKit.Messaging.Constants;
+using RedisKit.Messaging.Abstractions;
+using RedisKit.Messaging.Constants;
 
-namespace NRedisKit.Messaging;
+namespace RedisKit.Messaging;
 
 /// <summary>
 ///     See <c>https://stackexchange.github.io/StackExchange.Redis/Streams</c>

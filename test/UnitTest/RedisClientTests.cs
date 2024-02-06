@@ -1,10 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
-using NRedisKit.DependencyInjection.Options;
-using NRedisKit.Abstractions;
+using RedisKit.DependencyInjection.Options;
+using RedisKit.Abstractions;
 
-namespace NRedisKit.UnitTest;
+namespace RedisKit.UnitTest;
 
 public sealed partial class RedisClientTests
 {

@@ -3,7 +3,7 @@ using System.Linq;
 
 using NRedisStack.Search;
 
-namespace NRedisKit.Extensions;
+namespace RedisKit.Extensions;
 
 public static class DocumentExtensions
 {

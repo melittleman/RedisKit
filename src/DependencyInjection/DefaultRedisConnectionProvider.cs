@@ -3,7 +3,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace NRedisKit.DependencyInjection;
+namespace RedisKit.DependencyInjection;
 
 /// <inheritdoc />
 internal sealed record DefaultRedisConnectionProvider : IRedisConnectionProvider

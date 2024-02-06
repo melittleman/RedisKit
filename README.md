@@ -1,9 +1,9 @@
-# NRedisKit
+# RedisKit
 > A .NET Standard 2.1 helper library for common Redis client functionality. This project is very much still a work in progress.
 
-This package aims to build upon [NRedisStack](https://github.com/redis/NRedisStack) and provide all the functionality needed to get up and running with a new project utilizing Redis as fast as possible. With **NRedisKit** you can add multiple named Redis connections within the Dependency Injection container _(beneficial in hybrid environments where Redis server setups could be different e.g. persistent vs non-persistent)_, then configure each of these connections with features such as .NET Data Protection keys persistence, an `ITicketStore` implementation to store large Claims Principals from your application's authentication cookies _(very useful within Blazor Server applications where no HTTP Context is available)_, individual health checks to each Redis server, message consumer and producer implementations to make working with Redis Streams more simple as well as many other helpful methods and extensions for working with the [RedisJSON](https://redis.io/docs/data-types/json) and [RediSearch](https://github.com/RediSearch/RediSearch) modules.
+This package aims to build upon [NRedisStack](https://github.com/redis/NRedisStack) and provide all the functionality needed to get up and running with a new project utilizing Redis as fast as possible. With **RedisKit** you can add multiple named Redis connections within the Dependency Injection container _(beneficial in hybrid environments where Redis server setups could be different e.g. persistent vs non-persistent)_, then configure each of these connections with features such as .NET Data Protection keys persistence, an `ITicketStore` implementation to store large Claims Principals from your application's authentication cookies _(very useful within Blazor Server applications where no HTTP Context is available)_, individual health checks to each Redis server, message consumer and producer implementations to make working with Redis Streams more simple as well as many other helpful methods and extensions for working with the [RedisJSON](https://redis.io/docs/data-types/json) and [RediSearch](https://github.com/RediSearch/RediSearch) modules.
 
-[![Build & Test](https://github.com/melittleman/NRedisKit/actions/workflows/build-test.yml/badge.svg)](https://github.com/melittleman/NRedisKit/actions/workflows/build-test.yml)
+[![Build & Test](https://github.com/melittleman/RedisKit/actions/workflows/build-test.yml/badge.svg)](https://github.com/melittleman/RedisKit/actions/workflows/build-test.yml)
 
 ## Contents
 - [Getting Started](#getting-started)
@@ -23,18 +23,18 @@ This package aims to build upon [NRedisStack](https://github.com/redis/NRedisSta
 To get started with this library, you will first need to download and install either the [.NET 8 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0) or Microsoft [Visual Studio 2022](https://visualstudio.microsoft.com/downloads/) which comes bundled with the SDK.
 
 ## Repository Structure
-- **.github** - Files needed by GitHub are contained in the `.github` directory. For example; the `workflows` directory contains any _Build_, _Test_ or _Package_ configurations needed by **GitHub** [**Actions**](https://github.com/melittleman/NRedisKit/actions).
+- **.github** - Files needed by GitHub are contained in the `.github` directory. For example; the `workflows` directory contains any _Build_, _Test_ or _Package_ configurations needed by **GitHub** [**Actions**](https://github.com/melittleman/RedisKit/actions).
 - **src** - The _Source_ directory contains all the source code for the library.
-- **test** - Contains all unit and integration tests relating to the **src** directory. These tests are implemented in [XUnit](https://xunit.net/) and can be run using the ```dotnet test``` CLI. These tests will also be run as part of the [Build & Test](https://github.com/melittleman/NRedisKit/actions/workflows/build-test.yml) workflow in GitHub Actions.
+- **test** - Contains all unit and integration tests relating to the **src** directory. These tests are implemented in [XUnit](https://xunit.net/) and can be run using the ```dotnet test``` CLI. These tests will also be run as part of the [Build & Test](https://github.com/melittleman/RedisKit/actions/workflows/build-test.yml) workflow in GitHub Actions.
 
 ## Usage
-Once you have installed the desired version of **NRedisKit** you can configure this during service registration to be used by an application in the following ways.
+Once you have installed the desired version of **RedisKit** you can configure this during service registration to be used by an application in the following ways.
 
 ### Adding A Named Connection
 You can add a named Redis connection to the Dependency Injection container and configure it by passing in an `Action` of `RedisConnectionOptions`.
 
 ```csharp
-using NRedisKit.DependencyInjection.Extensions;
+using RedisKit.DependencyInjection.Extensions;
 
 services.AddRedisConnection("cloud-cache", options =>
 {
@@ -52,8 +52,8 @@ For example: `redis0:6379,redis1:6380,allowAdmin=true,ssl=false`
 
 This can then be used later anywhere in the application via the Transient `IRedisClientFactory` that retrieves named Redis connections and creates the wrapping client.
 ```csharp
-using NRedisKit;
-using NRedisKit.DependencyInjection.Abstractions;
+using RedisKit;
+using RedisKit.DependencyInjection.Abstractions;
 
 private readonly RedisClient _redis;
 
@@ -70,7 +70,7 @@ public async Task DoSomethingAsync()
 
 If only a single Redis connection is being used within the application, this can then easily be retrieved directly from DI, rather than going via the factory.
 ```csharp
-using NRedisKit;
+using RedisKit;
 
 private readonly RedisClient _redis;
 
@@ -87,8 +87,8 @@ public Task<T> GetSomethingAsync()
 
 You can continue to use a connection in exactly the same ways that you would otherwise use [NRedisStack](https://github.com/redis/NRedisStack) or [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis) directly.
 ```csharp
-using NRedisKit;
-using NRedisKit.DependencyInjection.Abstractions;
+using RedisKit;
+using RedisKit.DependencyInjection.Abstractions;
 
 using NRedisStack;
 using NRedisStack.RedisStackCommands;
@@ -121,7 +121,7 @@ The main benefit of configuring these named connections is to be able to connect
 For example; a caching instance that does not have persistence or high availability enabled, and therefore reduces costs. And a Messaging instance, where both persistence and AOF writing may be needed.
 
 ```csharp
-using NRedisKit.DependencyInjection.Extensions;
+using RedisKit.DependencyInjection.Extensions;
 
 services.AddRedisConnection("enterprise-cache", options =>
 {
@@ -143,7 +143,7 @@ The return type of `IServiceCollection.AddRedisConnection()` is a new instance o
 For example, to add the .NET Data Protection middleware to the application that utilizes your named Redis connection:
 
 ```csharp
-using NRedisKit.DependencyInjection.Extensions;
+using RedisKit.DependencyInjection.Extensions;
 
 services
     .AddRedisConnection("elasticache", options...)
@@ -154,7 +154,7 @@ services
 The `RedisClient` is also able to help abstract Redis JSON document usage within the application. You can use your own custom JSON converters for (de)serialization by configuring it in the following way.
 
 ```csharp
-using NRedisKit.DependencyInjection.Extensions;
+using RedisKit.DependencyInjection.Extensions;
 
 services.ConfigureRedisJson(options =>
 {
@@ -164,7 +164,7 @@ services.ConfigureRedisJson(options =>
 
 Use the `RedisClient` in the same way as you would with any of the other built in Redis data types and it will use the configured JSON converters.
 ```csharp
-using NRedisKit;
+using RedisKit;
 
 private readonly RedisClient _redis;
 
@@ -187,7 +187,7 @@ In order to get started simply chain either one or both of the methods below dur
 > **Note**: These do not need to be chained to the same connection. For example you could _Consume_ messages from an internal Redis server and then _Produce_ these out to an entirely different public server.
 
 ```csharp
-using NRedisKit.DependencyInjection.Extensions;
+using RedisKit.DependencyInjection.Extensions;
 
 services
     .AddRedisConnection("message-broker", options...)
@@ -201,7 +201,7 @@ services
 You can then request these abstractions from the Dependency Injection container and use them to produce or consume messages.
 
 ```csharp
-using NRedisKit.Messaging.Abstractions;
+using RedisKit.Messaging.Abstractions;
 
 private readonly IMessageConsumer<MyMessage> _consumer;
 private readonly IMessageProducer<MyMessage> _producer;
@@ -234,7 +234,7 @@ public Task ProduceSomethingAsync(MyMessage message)
 The .NET Data Protection providers can be configured to use your named Redis connection and save the keys under a specified location like the following:
 
 ```csharp
-using NRedisKit.DependencyInjection.Extensions;
+using RedisKit.DependencyInjection.Extensions;
 
 services
     .AddRedisConnection("redis-persistent", options...)
@@ -252,8 +252,8 @@ authentication sessions, and removes the reliance on browsers storing very large
 > **Note**: You MUST ensure that both [JSON document](#json-documents) storage and [Data Protection](#data-protection) has been configured for this to work correctly.
 
 ```csharp
-using NRedisKit.DependencyInjection.Extensions;
-using NRedisKit.Json.Converters;
+using RedisKit.DependencyInjection.Extensions;
+using RedisKit.Json.Converters;
 
 services
     .AddRedisConnection("redis-persistent", options...)
@@ -269,7 +269,7 @@ services
 You can configure the built in .NET Health Check framework to test connectivity to your named Redis connection as part of it's configured Health Checks.
 
 ```csharp
-using NRedisKit.DependencyInjection.Extensions;
+using RedisKit.DependencyInjection.Extensions;
 
 services
     .AddRedisConnection("redis-server", options...)

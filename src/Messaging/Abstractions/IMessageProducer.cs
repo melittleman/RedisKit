@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace NRedisKit.Messaging.Abstractions;
+namespace RedisKit.Messaging.Abstractions;
 
 /// <summary>
 ///     Message producer abstraction.

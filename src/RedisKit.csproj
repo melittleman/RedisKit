@@ -5,15 +5,15 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
 	
-    <PackageId>NRedisKit</PackageId>
+    <PackageId>RedisKit</PackageId>
     <PackageDescription>.NET Standard 2.1 Redis client helper library.</PackageDescription>
     <PackageTags>redis,netstandard,dotnet,melittleman</PackageTags>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageProjectUrl>https://github.com/melittleman/NRedisKit</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/melittleman/NRedisKit</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/melittleman/RedisKit</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/melittleman/RedisKit</RepositoryUrl>
 	
-    <Title>NRedisKit</Title>
-    <Authors>melittleman</Authors>
+    <Title>RedisKit</Title>
+    <Authors>Matt Lindsay</Authors>
     <Description>.NET Standard 2.1 Redis client helper library.</Description>
   </PropertyGroup>
 
@@ -26,7 +26,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.0" />
 
-	<PackageReference Include="IdentityModel" Version="6.0.0" />
+	  <PackageReference Include="IdentityModel" Version="6.0.0" />
     <PackageReference Include="NRedisStack" Version="0.10.1" />
     <PackageReference Include="OpenTelemetry" Version="1.7.0" />
     <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.7.0" />
@@ -36,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup>
-	<InternalsVisibleTo Include="NRedisKit.UnitTest" />
+	<InternalsVisibleTo Include="RedisKit.UnitTest" />
   </ItemGroup>
 
   <ItemGroup>

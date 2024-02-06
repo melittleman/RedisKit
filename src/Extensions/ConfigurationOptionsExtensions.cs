@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace NRedisKit.Extensions;
+namespace RedisKit.Extensions;
 
 internal static class ConfigurationOptionsExtensions
 {

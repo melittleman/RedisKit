@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Linq;
 
-namespace NRedisKit;
+namespace RedisKit;
 
 /// <inheritdoc />
 public sealed partial record RedisClient

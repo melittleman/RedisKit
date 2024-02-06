@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Text.Json;
 
-namespace NRedisKit.Extensions;
+namespace RedisKit.Extensions;
 
 internal static class RedisValueExtensions
 {

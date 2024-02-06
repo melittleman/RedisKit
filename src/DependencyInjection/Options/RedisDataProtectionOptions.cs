@@ -1,4 +1,4 @@
-﻿namespace NRedisKit.DependencyInjection.Options;
+﻿namespace RedisKit.DependencyInjection.Options;
 
 public sealed record RedisDataProtectionOptions
 {

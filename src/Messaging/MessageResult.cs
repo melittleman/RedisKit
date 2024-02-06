@@ -1,4 +1,4 @@
-﻿namespace NRedisKit.Messaging;
+﻿namespace RedisKit.Messaging;
 
 /// <summary>
 ///     Represents the result of a single message consumption from the broker.

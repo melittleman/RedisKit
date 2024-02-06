@@ -7,7 +7,7 @@ using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-namespace NRedisKit.Json.Converters;
+namespace RedisKit.Json.Converters;
 
 // This should probably be in a completely different library as it's
 // not actually coupled to the Redis implementation at all... 

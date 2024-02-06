@@ -8,12 +8,12 @@ using NRedisStack.Search;
 using NRedisStack.Search.DataTypes;
 using NRedisStack.RedisStackCommands;
 
-using NRedisKit.Querying.Abstractions;
-using NRedisKit.Querying.Extensions;
-using NRedisKit.Querying.Enums;
-using NRedisKit.Querying;
+using RedisKit.Querying.Abstractions;
+using RedisKit.Querying.Extensions;
+using RedisKit.Querying.Enums;
+using RedisKit.Querying;
 
-namespace NRedisKit;
+namespace RedisKit;
 
 /// <inheritdoc />
 public sealed partial record RedisClient

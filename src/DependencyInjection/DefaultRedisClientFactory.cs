@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 
-namespace NRedisKit.DependencyInjection;
+namespace RedisKit.DependencyInjection;
 
 internal sealed record DefaultRedisClientFactory : IRedisClientFactory
 {

@@ -6,9 +6,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{9686F443-E07
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{5C12C701-9BB2-48FC-A835-5176A592D149}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NRedisKit", "src\NRedisKit.csproj", "{34AEEB8C-DF91-4566-8D12-744A4F30FA20}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisKit", "src\RedisKit.csproj", "{34AEEB8C-DF91-4566-8D12-744A4F30FA20}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NRedisKit.UnitTest", "test\UnitTest\NRedisKit.UnitTest.csproj", "{C9B983E8-E79C-4A57-963D-6194DFE4371F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RedisKit.UnitTest", "test\UnitTest\RedisKit.UnitTest.csproj", "{C9B983E8-E79C-4A57-963D-6194DFE4371F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

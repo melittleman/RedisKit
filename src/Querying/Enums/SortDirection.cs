@@ -1,4 +1,4 @@
-﻿namespace NRedisKit.Querying.Enums;
+﻿namespace RedisKit.Querying.Enums;
 
 public enum SortDirection
 {

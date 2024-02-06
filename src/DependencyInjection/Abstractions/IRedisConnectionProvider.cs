@@ -1,6 +1,6 @@
 ﻿using System.Collections.Concurrent;
 
-namespace NRedisKit.DependencyInjection.Abstractions;
+namespace RedisKit.DependencyInjection.Abstractions;
 
 /// <summary>
 ///     A singleton container around multiple pooled Redis connections.

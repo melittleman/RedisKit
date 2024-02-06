@@ -1,4 +1,4 @@
-﻿namespace NRedisKit.UnitTest;
+﻿namespace RedisKit.UnitTest;
 
 public sealed partial class RedisClientTests
 {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace NRedisKit.DependencyInjection;
+namespace RedisKit.DependencyInjection;
 
 /// <inheritdoc />
 internal sealed record DefaultRedisConnectionBuilder : IRedisConnectionBuilder

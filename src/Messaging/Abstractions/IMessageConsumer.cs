@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace NRedisKit.Messaging.Abstractions;
+namespace RedisKit.Messaging.Abstractions;
 
 /// <summary>
 ///     Interface for implementations of Message Consumers.

@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 
-using NRedisKit.Querying.Abstractions;
+using RedisKit.Querying.Abstractions;
 
-namespace NRedisKit.Querying;
+namespace RedisKit.Querying;
 
 public sealed class PagedList<T> : List<T>, IPagedList<T>
 {

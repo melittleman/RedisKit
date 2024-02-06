@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging.Abstractions;
 
-namespace NRedisKit;
+namespace RedisKit;
 
 /// <inheritdoc cref="IRedisContext"/>
 public sealed record RedisContext : IRedisContext

@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-using NRedisKit.Querying.Abstractions;
+using RedisKit.Querying.Abstractions;
 
-namespace NRedisKit.Querying.Extensions;
+namespace RedisKit.Querying.Extensions;
 
 public static class PagingExtensions
 {

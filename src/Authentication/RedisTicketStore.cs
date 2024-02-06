@@ -8,7 +8,7 @@ using IdentityModel;
 using NRedisStack;
 using NRedisStack.RedisStackCommands;
 
-namespace NRedisKit.Authentication;
+namespace RedisKit.Authentication;
 
 /// <summary>
 ///     A custom <see cref="AuthenticationTicket"/> storage implementation of <see cref="ITicketStore"/> using

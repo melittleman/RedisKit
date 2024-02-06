@@ -1,4 +1,4 @@
-﻿namespace NRedisKit.Extensions;
+﻿namespace RedisKit.Extensions;
 
 public static class GuidExtensions
 {

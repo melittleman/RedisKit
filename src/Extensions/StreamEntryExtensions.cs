@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 
-namespace NRedisKit.Extensions;
+namespace RedisKit.Extensions;
 
 public static class StreamEntryExtensions
 {

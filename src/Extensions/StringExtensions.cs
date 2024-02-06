@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace NRedisKit.Extensions;
+namespace RedisKit.Extensions;
 
 public static class StringExtensions
 {

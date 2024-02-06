@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace NRedisKit.Querying.Abstractions;
+namespace RedisKit.Querying.Abstractions;
 
 public interface IPagedList<T> : IList<T>
 {

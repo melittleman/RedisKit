@@ -1,4 +1,4 @@
-﻿namespace NRedisKit.Abstractions;
+﻿namespace RedisKit.Abstractions;
 
 public interface IHashEntry
 {

@@ -12,14 +12,14 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Instrumentation.StackExchangeRedis;
 
-using NRedisKit.Diagnostics;
-using NRedisKit.Authentication;
-using NRedisKit.Messaging;
-using NRedisKit.Messaging.Constants;
-using NRedisKit.Messaging.Abstractions;
-using NRedisKit.Json.Converters;
+using RedisKit.Diagnostics;
+using RedisKit.Authentication;
+using RedisKit.Messaging;
+using RedisKit.Messaging.Constants;
+using RedisKit.Messaging.Abstractions;
+using RedisKit.Json.Converters;
 
-namespace NRedisKit.DependencyInjection.Extensions;
+namespace RedisKit.DependencyInjection.Extensions;
 
 public static class RedisConnectionBuilderExtensions
 {

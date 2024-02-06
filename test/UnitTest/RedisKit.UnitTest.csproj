@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\NRedisKit.csproj" />
+    <ProjectReference Include="..\..\src\RedisKit.csproj" />
   </ItemGroup>
 
 </Project>
