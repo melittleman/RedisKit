@@ -8,7 +8,7 @@ namespace RedisKit.DependencyInjection;
 /// <inheritdoc />
 internal sealed record DefaultRedisConnectionProvider : IRedisConnectionProvider
 {
-    private readonly ConcurrentDictionary<string, RedisContext> RedisConnections = new();
+    private readonly ConcurrentDictionary<string, RedisConnection> RedisConnections = new();
 
     private readonly IOptionsMonitor<RedisConnectionOptions> _options;
     private readonly ILoggerFactory _loggers;
@@ -31,13 +31,13 @@ internal sealed record DefaultRedisConnectionProvider : IRedisConnectionProvider
     }
 
     /// <inheritdoc />
-    public IRedisContext GetRequiredConnection(string name)
+    public IRedisConnection GetRequiredConnection(string name)
     {
         if (string.IsNullOrEmpty(name)) throw new ArgumentException("Must not be a null or empty value.", nameof(name));
 
-        if (RedisConnections.TryGetValue(name, out RedisContext? context) && context is not null)
+        if (RedisConnections.TryGetValue(name, out RedisConnection? connection) && connection is not null)
         {
-            return context;
+            return connection;
         }
 
         // Will 'Lazily' add these Redis connections to the internal
@@ -53,23 +53,23 @@ internal sealed record DefaultRedisConnectionProvider : IRedisConnectionProvider
             // locally or when in the Dev environment, as these will often share a single server for caching,
             // messaging pub/sub and persistent requirements.
 
-            context = new RedisContext(_loggers, _env, options);
+            connection = new RedisConnection(_loggers, _env, options);
 
-            if (AddConnection(name, context)) return context;
+            if (AddConnection(name, connection)) return connection;
         }
 
         throw new InvalidOperationException($"Unknown Redis connection name '{name}'.");
     }
 
     /// <summary>
-    ///     Adds the provided <see cref="RedisContext" /> to the internal 
+    ///     Adds the provided <see cref="RedisConnection" /> to the internal 
     ///     <see cref="ConcurrentDictionary{TKey, TValue}" /> under the key <paramref name="name" />.
     /// </summary>
     /// <param name="name">
-    ///     The User-friendly <see cref="string"/> "name" to key this <see cref="RedisContext" /> off.
+    ///     The User-friendly <see cref="string"/> "name" to key this <see cref="RedisConnection" /> off.
     /// </param>
-    /// <param name="context">
-    ///     The Redis connection context to store under the <paramref name="name" />.
+    /// <param name="connection">
+    ///     The Redis connection to store under the <paramref name="name" />.
     /// </param>
     /// <returns>
     ///     A <see cref="bool"/> to indicate whether the addition was successful or not.
@@ -78,14 +78,14 @@ internal sealed record DefaultRedisConnectionProvider : IRedisConnectionProvider
     ///     Thrown when the <see cref="ConcurrentDictionary{TKey, TValue}" /> already contains
     ///     a key matching <paramref name="name" />.
     /// </exception>
-    private bool AddConnection(string name, RedisContext context)
+    private bool AddConnection(string name, RedisConnection connection)
     {
         if (string.IsNullOrEmpty(name)) throw new ArgumentException("Must not be a null or empty value.", nameof(name));
-        if (context is null) throw new ArgumentNullException(nameof(context));
+        if (connection is null) throw new ArgumentNullException(nameof(connection));
 
         if (RedisConnections.ContainsKey(name))
             throw new InvalidOperationException($"Redis connection name '{name}' already exists!");
 
-        return RedisConnections.TryAdd(name, context);
+        return RedisConnections.TryAdd(name, connection);
     }
 }

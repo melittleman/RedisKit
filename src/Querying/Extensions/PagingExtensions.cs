@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
+using System.Collections.Generic;
 
 using RedisKit.Querying.Abstractions;
 
@@ -27,7 +27,7 @@ public static class PagingExtensions
 
         IList<T> items = source.ToList();
 
-        return items.ToPagedList(totalResults, filter);         
+        return items.ToPagedList(totalResults, filter);
     }
 
     public static IPagedList<T> ToPagedList<T>(this ICollection<T> source, long totalResults, SearchFilter filter)

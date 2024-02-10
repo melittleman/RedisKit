@@ -6,17 +6,17 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace RedisKit;
 
-/// <inheritdoc cref="IRedisContext"/>
-public sealed record RedisContext : IRedisContext
+/// <inheritdoc cref="IRedisConnection"/>
+public sealed record RedisConnection : IRedisConnection
 {
-    private readonly ILogger<RedisContext> _logger;
+    private readonly ILogger<RedisConnection> _logger;
     private readonly RedisConnectionOptions _options;
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
 
     private Lazy<IConnectionMultiplexer>? _lazyConnection;
 
     /// <inheritdoc />
-    public IConnectionMultiplexer Connection
+    public IConnectionMultiplexer Multiplexer
     {
         get
         {
@@ -38,10 +38,12 @@ public sealed record RedisContext : IRedisContext
     }
 
     /// <inheritdoc />
-    public IDatabase Db => Connection.GetDatabase();
+    public IDatabase Db => Multiplexer.GetDatabase();
 
     /// <inheritdoc />
-    public ISubscriber Subscriber => Connection.GetSubscriber();
+    public ISubscriber Sub => Multiplexer.GetSubscriber();
+
+    public IServer Server => Multiplexer.GetServer(_options.HostnameAndPort);
 
     /// <inheritdoc />
     public string? Endpoints { get; private set; }
@@ -51,26 +53,26 @@ public sealed record RedisContext : IRedisContext
 
     #region Constructors
 
-    internal RedisContext(
+    internal RedisConnection(
         IHostEnvironment env,
         IOptions<RedisConnectionOptions> options) : this(env, options.Value) { }
 
-    internal RedisContext(
+    internal RedisConnection(
         IHostEnvironment env,
         RedisConnectionOptions options) : this(new NullLoggerFactory(), env, options) { }
 
-    internal RedisContext(
+    internal RedisConnection(
         ILoggerFactory loggers,
         IHostEnvironment env,
         IOptions<RedisConnectionOptions> options) : this(loggers, env, options.Value) { }
 
-    internal RedisContext(
+    internal RedisConnection(
         ILoggerFactory loggers,
         IHostEnvironment env,
         RedisConnectionOptions options)
     {
         _options = options ?? throw new ArgumentNullException(nameof(options));
-        _logger = loggers.CreateLogger<RedisContext>();
+        _logger = loggers.CreateLogger<RedisConnection>();
 
         // TODO: This is also being checked and assigned in the Data Protection
         // builder extensions... how can we centralize this?
@@ -195,7 +197,7 @@ public sealed record RedisContext : IRedisContext
         return configuration;
     }
 
-    ~RedisContext()
+    ~RedisConnection()
     {
         // Use the field rather than the property here, as the 'getter'
         // will attempt to re-create the multiplexer if not connected

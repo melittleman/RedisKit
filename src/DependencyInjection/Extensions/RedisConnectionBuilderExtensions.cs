@@ -58,13 +58,13 @@ public static class RedisConnectionBuilderExtensions
 
         builder.Services.AddOptions<KeyManagementOptions>().Configure<IRedisConnectionProvider, ILogger<IRedisConnectionBuilder>>((options, provider, logger) =>
         {
-            IRedisContext context = provider.GetRequiredConnection(builder.Name);
+            IRedisConnection connection = provider.GetRequiredConnection(builder.Name);
 
-            logger.LogInformation("Using Redis endpoint {Endpoint} for Data Protection keys persistence.", context.Endpoints);
+            logger.LogInformation("Using Redis endpoint {Endpoint} for Data Protection keys persistence.", connection.Endpoints);
 
             logger.LogInformation("Using application isolation {NameAndEnvironment} for Data Protection.", applicationIsolation);
 
-            options.XmlRepository = new RedisXmlRepository(() => context.Db, new RedisKey(dpOptions.KeyName));
+            options.XmlRepository = new RedisXmlRepository(() => connection.Db, new RedisKey(dpOptions.KeyName));
         });
 
         return builder;
@@ -101,9 +101,9 @@ public static class RedisConnectionBuilderExtensions
         {
             IRedisConnectionProvider provider = s.GetRequiredService<IRedisConnectionProvider>();
 
-            IRedisContext context = provider.GetRequiredConnection(builder.Name);
+            IRedisConnection connection = provider.GetRequiredConnection(builder.Name);
 
-            return new RedisTicketStore(context, options);
+            return new RedisTicketStore(connection, options);
         });
 
         builder.Services.AddOptions<CookieAuthenticationOptions>(options.CookieSchemeName).Configure<ITicketStore>((options, store) =>
@@ -180,7 +180,7 @@ public static class RedisConnectionBuilderExtensions
                 IRedisConnectionProvider provider = sp.GetRequiredService<IRedisConnectionProvider>();
                 ILogger<RedisHealthCheck> logger = sp.GetRequiredService<ILogger<RedisHealthCheck>>();
 
-                IRedisContext connection = provider.GetRequiredConnection(builder.Name);
+                IRedisConnection connection = provider.GetRequiredConnection(builder.Name);
 
                 return new RedisHealthCheck(connection, logger);
 
@@ -245,9 +245,9 @@ public static class RedisConnectionBuilderExtensions
         builder.Services.AddOpenTelemetry().WithTracing(b => b.AddRedisInstrumentation($"Redis:{builder.Name}", null, configure).ConfigureRedisInstrumentation((s, i) =>
         {
             IRedisConnectionProvider provider = s.GetRequiredService<IRedisConnectionProvider>();
-            IRedisContext context = provider.GetRequiredConnection(builder.Name);
+            IRedisConnection connection = provider.GetRequiredConnection(builder.Name);
             
-            i.AddConnection(context.Connection);
+            i.AddConnection(connection.Multiplexer);
         }));
 
         return builder;

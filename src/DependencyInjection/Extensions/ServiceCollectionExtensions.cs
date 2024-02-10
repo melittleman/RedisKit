@@ -67,7 +67,7 @@ public static class ServiceCollectionExtensions
     ///     <c><see cref="IRedisConnectionProvider"/>.GetRequiredConnection("name");</c> method from DI.
     /// </remarks>
     /// <param name="services">The application service collection within the Dependency Injection container.</param>
-    /// <param name="name">The unique name for this <see cref="RedisContext"/> connection.</param>
+    /// <param name="name">The unique name for this <see cref="RedisConnection"/> connection.</param>
     /// <param name="configure">The configure action used to provide configuration to the connection.</param>
     /// <returns>
     ///     A new <see cref="IRedisConnectionBuilder"/> that can be used to chain
@@ -91,16 +91,15 @@ public static class ServiceCollectionExtensions
         // We could have multiple Redis Connections added to the DI container.
         // So 'TryAdd' will only add once, if it does not already exist.
         services.TryAddSingleton<IRedisConnectionProvider, DefaultRedisConnectionProvider>();
-        services.TryAddTransient<IRedisClientFactory, DefaultRedisClientFactory>();
 
-        // Adds a default transient Redis Client implementation based on the last registered name.
+        // Adds a default transient Redis connection implementation based on the last registered name.
         // This would be useful for clients with only a single named connection as they can then
-        // utilize the RedisClient from DI rather than requesting from the factory directly.
+        // utilize the RedisConnection from DI rather than requesting from the factory directly.
         services.AddTransient(sp =>
         {
-            IRedisClientFactory factory = sp.GetRequiredService<IRedisClientFactory>();
+            IRedisConnectionProvider factory = sp.GetRequiredService<IRedisConnectionProvider>();
 
-            return factory.CreateClient(name);
+            return factory.GetRequiredConnection(name);
         });
 
         DefaultRedisConnectionBuilder builder = new(name, services, configure);

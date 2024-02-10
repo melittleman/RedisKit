@@ -4,19 +4,6 @@ namespace RedisKit.Extensions;
 
 public static class StringExtensions
 {
-    internal static object? ChangeType(this string source, Type type)
-    {
-        // Try to 'Parse' the value into Type first as this will be
-        // more better for performance due to not requiring any boxing.
-        if (source.TryGetStructOrEnum(type, out object enumOrStruct)) return enumOrStruct;
-
-        TypeConverter converter = TypeDescriptor.GetConverter(type);
-
-        return converter.CanConvertFrom(typeof(string))
-            ? converter.ConvertFromInvariantString(source)
-            : default;
-    }
-
     public static bool TryGetStructOrEnum(this string source, Type type, out object value)
     {
         if (type == typeof(Guid)) return source.TryGetGuid(out value);
@@ -116,5 +103,18 @@ public static class StringExtensions
             .Replace("=", "\\=")
             .Replace("~", "\\~")
             .Replace(" ", "\\ ");
+    }
+
+    internal static object? ChangeType(this string source, Type type)
+    {
+        // Try to 'Parse' the value into Type first as this will be
+        // more better for performance due to not requiring any boxing.
+        if (source.TryGetStructOrEnum(type, out object enumOrStruct)) return enumOrStruct;
+
+        TypeConverter converter = TypeDescriptor.GetConverter(type);
+
+        return converter.CanConvertFrom(typeof(string))
+            ? converter.ConvertFromInvariantString(source)
+            : default;
     }
 }

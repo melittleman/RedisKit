@@ -20,7 +20,7 @@ namespace RedisKit.Messaging;
 /// </typeparam>
 public sealed record RedisStreamsConsumer<TMessage> : IMessageConsumer<TMessage>
 {
-    private readonly IRedisContext _redis;
+    private readonly IRedisConnection _redis;
     private readonly ILogger<RedisStreamsConsumer<TMessage>> _logger;
 
     private readonly string _consumerGroup;
@@ -32,11 +32,11 @@ public sealed record RedisStreamsConsumer<TMessage> : IMessageConsumer<TMessage>
 
     // This is a 'legacy' constructor for the .NET Framework
     // applications that do not have dependence injection.
-    // They will have to create their own Redis context and
+    // They will have to create their own Redis connection and
     // pass it in, and will not have access to logging.
     public RedisStreamsConsumer(
         string consumerGroup,
-        IRedisContext redis)
+        IRedisConnection redis)
     {
         _logger = new NullLogger<RedisStreamsConsumer<TMessage>>();
 

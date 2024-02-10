@@ -8,11 +8,11 @@ namespace RedisKit.Diagnostics;
 /// <inheritdoc />
 internal sealed record RedisHealthCheck : IHealthCheck
 {
-    private readonly IRedisContext _redis;
+    private readonly IRedisConnection _redis;
     private readonly ILogger<RedisHealthCheck> _logger;
 
     public RedisHealthCheck(
-        IRedisContext redis,
+        IRedisConnection redis,
         ILogger<RedisHealthCheck> logger)
     {
         _redis = redis;
@@ -24,7 +24,7 @@ internal sealed record RedisHealthCheck : IHealthCheck
         HealthCheckContext context,
         CancellationToken cancellationToken)
     {
-        if (_redis.Connection.IsConnected)
+        if (_redis.Multiplexer.IsConnected)
         {
             _logger.LogDebug("Redis health check is healthy. Currently connected.");
 
@@ -33,15 +33,15 @@ internal sealed record RedisHealthCheck : IHealthCheck
 
         // ReSharper disable once ConvertIfStatementToReturnStatement
         // ML: Despite being slightly longer, we don't need to chain 3 ternary's here.
-        if (_redis.Connection.IsConnecting)
+        if (_redis.Multiplexer.IsConnecting)
         {
             _logger.LogWarning("Redis health check is degraded. Currently connecting...");
 
-            return Task.FromResult(HealthCheckResult.Degraded("Redis is connecting."));
+            return Task.FromResult(HealthCheckResult.Degraded("Redis is connecting..."));
         }
 
-        _logger.LogError("Redis health check is unhealthy. Currently not connected.");
+        _logger.LogError("Redis health check is unhealthy. Currently not connected!");
 
-        return Task.FromResult(HealthCheckResult.Unhealthy("Redis is not connected."));
+        return Task.FromResult(HealthCheckResult.Unhealthy("Redis is not connected!"));
     }
 }

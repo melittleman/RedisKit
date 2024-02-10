@@ -12,14 +12,14 @@ namespace RedisKit.Authentication;
 
 /// <summary>
 ///     A custom <see cref="AuthenticationTicket"/> storage implementation of <see cref="ITicketStore"/> using
-///     a <see cref="RedisContext"/> to persist the data into distributed server-side cache as JSON.
+///     a <see cref="RedisConnection"/> to persist the data into distributed server-side cache as JSON.
 /// </summary>
 public sealed record RedisTicketStore : ITicketStore
 {
     private const string SessionId = "session_id";
 
     private readonly RedisAuthenticationTicketOptions _options;
-    private readonly IRedisContext _redis;
+    private readonly IRedisConnection _redis;
 
     private IDatabase Db => _redis.Db;
 
@@ -27,7 +27,7 @@ public sealed record RedisTicketStore : ITicketStore
 
     private string KeyPrefix => _options.KeyPrefix;
 
-    public RedisTicketStore(IRedisContext redis, RedisAuthenticationTicketOptions options)
+    public RedisTicketStore(IRedisConnection redis, RedisAuthenticationTicketOptions options)
     {
         _redis = redis ?? throw new ArgumentNullException(nameof(redis));
         _options = options ?? throw new ArgumentNullException(nameof(options));

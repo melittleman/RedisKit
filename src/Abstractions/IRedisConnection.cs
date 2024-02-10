@@ -1,7 +1,7 @@
 ﻿namespace RedisKit.Abstractions;
 
 /// <summary>
-///     <para>The Redis connection context.</para>
+///     <para>The Redis connection.</para>
 ///     <para>
 ///         This MUST be available as a singleton to a unque Redis instance in order
 ///         for the <see cref="IConnectionMultiplexer"/> to be shared and re-used.
@@ -15,16 +15,18 @@
 /// <remarks>
 ///     See: https://docs.redislabs.com/latest/rs/references/client_references/client_csharp/
 /// </remarks>
-public interface IRedisContext
+public interface IRedisConnection
 {
     /// <inheritdoc cref="IConnectionMultiplexer" />
-    IConnectionMultiplexer Connection { get; }
+    IConnectionMultiplexer Multiplexer { get; }
 
     /// <inheritdoc cref="IDatabase" />
     IDatabase Db { get; }
 
     /// <inheritdoc cref="ISubscriber" />
-    ISubscriber Subscriber { get; }
+    ISubscriber Sub { get; }
+
+    IServer Server { get; }
 
     /// <summary>
     ///     The Redis 'stringified' endpoint information.
