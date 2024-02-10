@@ -26,6 +26,7 @@ public interface IRedisConnection
     /// <inheritdoc cref="ISubscriber" />
     ISubscriber Sub { get; }
 
+    /// <inheritdoc cref="IServer" />
     IServer Server { get; }
 
     /// <summary>

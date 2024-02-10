@@ -1,7 +1,9 @@
 # RedisKit
 > A .NET Standard 2.1 helper library for common Redis client functionality. This project is very much still a work in progress.
 
-This package aims to build upon [NRedisStack](https://github.com/redis/NRedisStack) and provide all the functionality needed to get up and running with a new project utilizing Redis as fast as possible. With **RedisKit** you can add multiple named Redis connections within the Dependency Injection container _(beneficial in hybrid environments where Redis server setups could be different e.g. persistent vs non-persistent)_, then configure each of these connections with features such as .NET Data Protection keys persistence, an `ITicketStore` implementation to store large Claims Principals from your application's authentication cookies _(very useful within Blazor Server applications where no HTTP Context is available)_, individual health checks to each Redis server, message consumer and producer implementations to make working with Redis Streams more simple as well as many other helpful methods and extensions for working with the [RedisJSON](https://redis.io/docs/data-types/json) and [RediSearch](https://github.com/RediSearch/RediSearch) modules.
+This package aims to build upon [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis) and [NRedisStack](https://github.com/redis/NRedisStack) in order to provide all the functionality needed to get up and running with a new project utilizing Redis as fast as possible. 
+
+With **RedisKit** you can add multiple named Redis connections within the Dependency Injection container _(beneficial in hybrid environments where Redis server setups could be different e.g. persistent vs non-persistent)_, then configure each of these connections with features such as .NET Data Protection keys persistence, an `ITicketStore` implementation to store large Claims Principals from your application's authentication cookies _(very useful within Blazor Server applications where no HTTP Context is available)_, individual health checks to each Redis server, message consumer and producer implementations to make working with Redis Streams more simple as well as many other helpful methods and extensions for working with the [RedisJSON](https://redis.io/docs/data-types/json) and [RediSearch](https://github.com/RediSearch/RediSearch) modules.
 
 [![Build & Test](https://github.com/melittleman/RedisKit/actions/workflows/build-test.yml/badge.svg)](https://github.com/melittleman/RedisKit/actions/workflows/build-test.yml)
 
@@ -50,55 +52,55 @@ For example: `redis0:6379,redis1:6380,allowAdmin=true,ssl=false`
 
 ### Using A Named Connection
 
-This can then be used later anywhere in the application via the Transient `IRedisClientFactory` that retrieves named Redis connections and creates the wrapping client.
+This can then be used later anywhere in the application via the Singleton `IRedisConnectionProvider` that retrieves named Redis connections.
 ```csharp
 using RedisKit;
 using RedisKit.DependencyInjection.Abstractions;
 
-private readonly RedisClient _redis;
+private readonly IRedisConnection _redis;
 
-public MyClassConstructor(IRedisClientFactory factory)
+public MyClassConstructor(IRedisConnectionProvider provider)
 {
-    _redis = factory.CreateClient("cloud-cache");
+    _redis = provider.GetRequiredConnection("cloud-cache");
 }
 
 public async Task DoSomethingAsync()
 {
-    await _redis.SetStringAsync("key", "value");
+    await _redis.Db.StringSetAsync("key", "value");
 }
 ```
 
-If only a single Redis connection is being used within the application, this can then easily be retrieved directly from DI, rather than going via the factory.
+If only a single Redis connection is being used within the application, this can then easily be retrieved directly from DI, rather than going via the provider.
 ```csharp
-using RedisKit;
+using RedisKit.Abstractions;
 
-private readonly RedisClient _redis;
+private readonly IRedisConnection _redis;
 
-public MyClassConstructor(RedisClient redis)
+public MyClassConstructor(IRedisConnection redis)
 {
     _redis = redis
 }
 
 public Task<T> GetSomethingAsync()
 {
-    return _redis.GetFromHashAsync<T>("key");
+    return _redis.Db.HashGetAsync<T>("key");
 }
 ```
 
 You can continue to use a connection in exactly the same ways that you would otherwise use [NRedisStack](https://github.com/redis/NRedisStack) or [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis) directly.
 ```csharp
-using RedisKit;
-using RedisKit.DependencyInjection.Abstractions;
+using StackExchange.Redis;
 
 using NRedisStack;
 using NRedisStack.RedisStackCommands;
-using StackExchange.Redis;
 
-private readonly RedisClient _redis;
+using RedisKit.DependencyInjection.Abstractions;
 
-public MyClassConstructor(IRedisClientFactory factory)
+private readonly IRedisConnection _redis;
+
+public MyClassConstructor(IRedisConnectionProvider provider)
 {
-    _redis = factory.CreateClient("enterprise-db");
+    _redis = provider.GetRequiredConnection("enterprise-db");
 }
 
 public async Task<bool> ExpireKeyAsync()
@@ -151,7 +153,7 @@ services
 ```
 
 #### JSON Documents
-The `RedisClient` is also able to help abstract Redis JSON document usage within the application. You can use your own custom JSON converters for (de)serialization by configuring it in the following way.
+**RedisKit** is also able to help abstract Redis JSON document usage within the application. You can use your own custom JSON converters for (de)serialization by configuring it in the following way.
 
 ```csharp
 using RedisKit.DependencyInjection.Extensions;
@@ -162,20 +164,24 @@ services.ConfigureRedisJson(options =>
 });
 ```
 
-Use the `RedisClient` in the same way as you would with any of the other built in Redis data types and it will use the configured JSON converters.
+Then pass the `RedisJsonOptions` into the available `JsonCommands` methods. 
 ```csharp
-using RedisKit;
+using RedisKit.DependencyInjection.Abstractions;
 
-private readonly RedisClient _redis;
+private readonly JsonCommands _json;
+private readonly RedisJsonOptions _options;
 
-public MyClassConstructor(RedisClient redis)
+public MyClassConstructor(IRedisConnectionProvider provider, IOptions<RedisJsonOptions> options)
 {
-    _redis = redis;
+    IRedisConnection redis = provider.GetRequiredConnection("document-db");
+
+    _json = redis.Json;
+    _options = options.Value;
 }
 
-public Task<MyConcreteClass> GetSomethingAsync()
+public Task<MyCustomClass> GetSomethingAsync()
 {
-    return _redis.GetFromJsonAsync<MyConcreteClass>("key");
+    return _json.GetAsync<MyCustomClass>("key", _options);
 }
 ```
 
@@ -249,7 +255,7 @@ If using cookie authentication, there is a provided implementation of `ITicketSt
 to utilize the named Redis connection to store instances of `AuthenticationTicket` within the server as JSON. This then easily allows for distributed
 authentication sessions, and removes the reliance on browsers storing very large `ClaimsPrincipal` payloads and from purging this data when they are expected to.
 
-> **Note**: You MUST ensure that both [JSON document](#json-documents) storage and [Data Protection](#data-protection) has been configured for this to work correctly.
+> **Note**: You MUST ensure that [Data Protection](#data-protection) has been configured for this to work correctly.
 
 ```csharp
 using RedisKit.DependencyInjection.Extensions;

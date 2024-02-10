@@ -43,6 +43,7 @@ public sealed record RedisConnection : IRedisConnection
     /// <inheritdoc />
     public ISubscriber Sub => Multiplexer.GetSubscriber();
 
+    /// <inheritdoc />
     public IServer Server => Multiplexer.GetServer(_options.HostnameAndPort);
 
     /// <inheritdoc />
