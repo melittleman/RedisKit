@@ -1,9 +1,9 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
@@ -26,16 +26,20 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
         // Start "AuthenticationTicket" object
         if (reader.TokenType is not JsonTokenType.StartObject) throw new JsonException("Invalid JSON object.");
 
+        JsonNamingPolicy policy = options.PropertyNamingPolicy
+            ?? JsonSerializerOptions.Default.PropertyNamingPolicy
+            ?? JsonNamingPolicy.SnakeCaseLower;
+
         // Read "AuthenticationScheme" property
-        string authenticationScheme = GetStringProperty(ref reader, nameof(AuthenticationTicket.AuthenticationScheme))
+        string authenticationScheme = GetStringProperty(ref reader, policy.ConvertName(nameof(AuthenticationTicket.AuthenticationScheme)))
                                       ?? CookieAuthenticationDefaults.AuthenticationScheme
                                       ?? IdentityConstants.ApplicationScheme;
 
         // Read "Principal" property
-        ClaimsPrincipal principal = ReadClaimsPrincipal(ref reader);
+        ClaimsPrincipal principal = ReadClaimsPrincipal(ref reader, policy);
 
         // Read "Properties" property
-        AuthenticationProperties properties = ReadAuthenticationProperties(ref reader);
+        AuthenticationProperties properties = ReadAuthenticationProperties(ref reader, policy);
 
         // End of "AuthenticationTicket" object
         if (reader.Read() && reader.TokenType is JsonTokenType.EndObject)
@@ -55,19 +59,19 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
     /// <param name="reader">The UTF-8 JSON reader.</param>
     /// <returns>A new <see cref="ClaimsPrincipal"/> for the stored <see cref="AuthenticationTicket"/>.</returns>
     /// <exception cref="JsonException">Throws a <see cref="JsonException"/> during deserialization problems.</exception>
-    private static ClaimsPrincipal ReadClaimsPrincipal(ref Utf8JsonReader reader)
+    private static ClaimsPrincipal ReadClaimsPrincipal(ref Utf8JsonReader reader, JsonNamingPolicy policy)
     {
         // Read "Principal" property name
-        ReadPropertyName(ref reader, nameof(AuthenticationTicket.Principal));
+        ReadPropertyName(ref reader, policy.ConvertName(nameof(AuthenticationTicket.Principal)));
 
         // Read "Principal" property value
-        ReadPropertyValue(ref reader, nameof(AuthenticationTicket.Principal), JsonTokenType.StartObject);
+        ReadPropertyValue(ref reader, policy.ConvertName(nameof(AuthenticationTicket.Principal)), JsonTokenType.StartObject);
 
         // Read "Identities" property name
-        ReadPropertyName(ref reader, nameof(AuthenticationTicket.Principal.Identities));
+        ReadPropertyName(ref reader, policy.ConvertName(nameof(AuthenticationTicket.Principal.Identities)));
 
         // Read "Identities" property value
-        ReadPropertyValue(ref reader, nameof(AuthenticationTicket.Principal.Identities), JsonTokenType.StartArray);
+        ReadPropertyValue(ref reader, policy.ConvertName(nameof(AuthenticationTicket.Principal.Identities)), JsonTokenType.StartArray);
 
         List<ClaimsIdentity> identities = [];
 
@@ -75,7 +79,7 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
         {
             if (reader.TokenType is JsonTokenType.StartObject)
             {
-                identities.Add(ReadClaimsIdentity(ref reader));
+                identities.Add(ReadClaimsIdentity(ref reader, policy));
             }
             // End of "Identities" property array
             else if (reader.TokenType is JsonTokenType.EndArray) break;
@@ -93,13 +97,13 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
     /// <param name="reader">The UTF-8 JSON reader.</param>
     /// <returns>A new <see cref="ClaimsIdentity"/> for the stored <see cref="AuthenticationTicket"/>.</returns>
     /// <exception cref="JsonException">Throws a <see cref="JsonException"/> during deserialization problems.</exception>
-    private static ClaimsIdentity ReadClaimsIdentity(ref Utf8JsonReader reader)
+    private static ClaimsIdentity ReadClaimsIdentity(ref Utf8JsonReader reader, JsonNamingPolicy policy)
     {
-        string? authenticationType = GetStringProperty(ref reader, nameof(ClaimsIdentity.AuthenticationType));
-        string nameClaimType = GetStringProperty(ref reader, nameof(ClaimsIdentity.NameClaimType)) ?? ClaimsIdentity.DefaultNameClaimType;
-        string roleClaimType = GetStringProperty(ref reader, nameof(ClaimsIdentity.RoleClaimType)) ?? ClaimsIdentity.DefaultRoleClaimType;
+        string? authenticationType = GetStringProperty(ref reader, policy.ConvertName(nameof(ClaimsIdentity.AuthenticationType)));
+        string nameClaimType = GetStringProperty(ref reader, policy.ConvertName(nameof(ClaimsIdentity.NameClaimType))) ?? ClaimsIdentity.DefaultNameClaimType;
+        string roleClaimType = GetStringProperty(ref reader, policy.ConvertName(nameof(ClaimsIdentity.RoleClaimType))) ?? ClaimsIdentity.DefaultRoleClaimType;
 
-        IEnumerable<Claim> claims = ReadClaims(ref reader);
+        IEnumerable<Claim> claims = ReadClaims(ref reader, policy);
 
         ClaimsIdentity identity = new(claims, authenticationType, nameClaimType, roleClaimType);
 
@@ -113,13 +117,13 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
     /// </summary>
     /// <param name="reader">The UTF-8 JSON reader.</param>
     /// <returns>A new IEnumerable of <see cref="Claim"/>s from the stored <see cref="AuthenticationTicket"/>.</returns>
-    private static List<Claim> ReadClaims(ref Utf8JsonReader reader)
+    private static List<Claim> ReadClaims(ref Utf8JsonReader reader, JsonNamingPolicy policy)
     {
         // Read "Claims" property name
-        ReadPropertyName(ref reader, nameof(ClaimsIdentity.Claims));
+        ReadPropertyName(ref reader, policy.ConvertName(nameof(ClaimsIdentity.Claims)));
 
         // Read "Claims" property value
-        ReadPropertyValue(ref reader, nameof(ClaimsIdentity.Claims), JsonTokenType.StartArray);
+        ReadPropertyValue(ref reader, policy.ConvertName(nameof(ClaimsIdentity.Claims)), JsonTokenType.StartArray);
 
         List<Claim> claims = [];
 
@@ -127,7 +131,7 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
         {
             if (reader.TokenType is JsonTokenType.StartObject)
             {
-                claims.Add(ReadClaim(ref reader));
+                claims.Add(ReadClaim(ref reader, policy));
             }
             // End of "Claims" property array
             else if (reader.TokenType is JsonTokenType.EndArray) break;
@@ -142,7 +146,7 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
     /// <param name="reader">The UTF-8 JSON reader.</param>
     /// <returns>A new <see cref="Claim"/> from the stored <see cref="AuthenticationTicket"/>.</returns>
     /// <exception cref="JsonException">Throws a <see cref="JsonException"/> during deserialization problems.</exception>
-    private static Claim ReadClaim(ref Utf8JsonReader reader)
+    private static Claim ReadClaim(ref Utf8JsonReader reader, JsonNamingPolicy policy)
     {
         string? issuer = ClaimsIdentity.DefaultIssuer;
         string? originalIssuer = null;
@@ -150,6 +154,12 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
         string? claimValue = null;
 
         string claimValueType = ClaimValueTypes.String;
+
+        string issuerProperty = policy.ConvertName(nameof(Claim.Issuer));
+        string originalIssuerProperty = policy.ConvertName(nameof(Claim.OriginalIssuer));
+        string typeProperty = policy.ConvertName(nameof(Claim.Type));
+        string valueTypeProperty = policy.ConvertName(nameof(Claim.ValueType));
+        string valueProperty = policy.ConvertName(nameof(Claim.Value));
 
         while (reader.Read())
         {
@@ -163,73 +173,63 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
             string? propertyName = reader.GetString();
 
             if (reader.Read() is false) throw new JsonException($"Cannot read JSON token for property name: {propertyName}.");
+            if (string.IsNullOrEmpty(propertyName)) continue;
 
-            switch (propertyName)
+            if (propertyName.Equals(issuerProperty))
             {
-                // TODO: The below could probably be cleaned up and unified to avoid these duplicated Exception messages.
+                if (reader.TokenType is not JsonTokenType.String) throw new JsonException("Invalid JSON token for Claim.Issuer property value.");
+                issuer = reader.GetString();
+            }
+            else if (propertyName.Equals(originalIssuerProperty))
+            {
+                if (reader.TokenType is not JsonTokenType.String) throw new JsonException("Invalid JSON token for Claim.OriginalIssuer property value.");
+                originalIssuer = reader.GetString();
+            }
+            else if (propertyName.Equals(typeProperty))
+            {
+                if (reader.TokenType is not JsonTokenType.String) throw new JsonException("Invalid JSON token for Claim.Type property value.");
+                claimType = reader.GetString();
+            }
+            else if (propertyName.Equals(valueTypeProperty))
+            {
+                if (reader.TokenType is not JsonTokenType.String) throw new JsonException("Invalid JSON token for Claim.ValueType property value.");
 
-                case nameof(Claim.Issuer):
+                // We need to ensure that "Claim.ValueType" is serialized and stored before
+                // the "Claim.Value" so that we know how to deserialize the value correctly.
+                claimValueType = reader.GetString() ?? ClaimValueTypes.String;
+            }
+            else if (propertyName.Equals(valueProperty))
+            {
+                // May want to add further Claim Types in here... DateTime, double etc.
+                switch (claimValueType)
                 {
-                    if (reader.TokenType is not JsonTokenType.String) throw new JsonException("Invalid JSON token for Claim.Issuer property value.");
-                    issuer = reader.GetString();
-                    break;
-                }
-                case nameof(Claim.OriginalIssuer):
-                {
-                    if (reader.TokenType is not JsonTokenType.String) throw new JsonException("Invalid JSON token for Claim.OriginalIssuer property value.");
-                    originalIssuer = reader.GetString();
-                    break;
-                }
-                case nameof(Claim.Type):
-                {
-                    if (reader.TokenType is not JsonTokenType.String) throw new JsonException("Invalid JSON token for Claim.Type property value.");
-                    claimType = reader.GetString();
-                    break;
-                }
-                case nameof(Claim.ValueType):
-                {
-                    if (reader.TokenType is not JsonTokenType.String) throw new JsonException("Invalid JSON token for Claim.ValueType property value.");
-
-                    // We need to ensure that "Claim.ValueType" is serialized and stored before
-                    // the "Claim.Value" so that we know how to deserialize the value correctly.
-                    claimValueType = reader.GetString() ?? ClaimValueTypes.String;
-                    break;
-                }
-                case nameof(Claim.Value):
-                {
-                    // May want to add further Claim Types in here... Int64 etc.
-                    switch (claimValueType)
+                    case ClaimValueTypes.Boolean:
                     {
-                        case ClaimValueTypes.Boolean:
-                        {
-                            if (reader.TokenType is not (JsonTokenType.False or JsonTokenType.True))
-                                throw new JsonException("Invalid JSON token for boolean Claim.Value property value.");
+                        if (reader.TokenType is not (JsonTokenType.False or JsonTokenType.True))
+                            throw new JsonException("Invalid JSON token for boolean Claim.Value property value.");
 
-                            claimValue = reader.GetBoolean().ToString();
-                            break;
-                        }
-                        case ClaimValueTypes.Integer:
-                        case ClaimValueTypes.Integer32:
-                        {
-                            if (reader.TokenType is not JsonTokenType.Number) throw new JsonException("Invalid JSON token for integer Claim.Value property value.");
-                            claimValue = reader.GetInt32().ToString();
-                            break;
-                        }
-                        case ClaimValueTypes.Integer64:
-                        {
-                            if (reader.TokenType is not JsonTokenType.Number) throw new JsonException("Invalid JSON token for integer64 Claim.Value property value.");
-                            claimValue = reader.GetInt64().ToString();
-                            break;
-                        }
-                        default:
-                        {
-                            if (reader.TokenType is not JsonTokenType.String) throw new JsonException("Invalid JSON token for string Claim.Value property value.");
-                            claimValue = reader.GetString();
-                            break;
-                        }
+                        claimValue = reader.GetBoolean().ToString();
+                        break;
                     }
-
-                    break;
+                    case ClaimValueTypes.Integer:
+                    case ClaimValueTypes.Integer32:
+                    {
+                        if (reader.TokenType is not JsonTokenType.Number) throw new JsonException("Invalid JSON token for integer Claim.Value property value.");
+                        claimValue = reader.GetInt32().ToString();
+                        break;
+                    }
+                    case ClaimValueTypes.Integer64:
+                    {
+                        if (reader.TokenType is not JsonTokenType.Number) throw new JsonException("Invalid JSON token for integer64 Claim.Value property value.");
+                        claimValue = reader.GetInt64().ToString();
+                        break;
+                    }
+                    default:
+                    {
+                        if (reader.TokenType is not JsonTokenType.String) throw new JsonException("Invalid JSON token for string Claim.Value property value.");
+                        claimValue = reader.GetString();
+                        break;
+                    }
                 }
             }
         }
@@ -246,19 +246,19 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
     /// <param name="reader">A UTF-8 JSON reader.</param>
     /// <returns>The <see cref="AuthenticationProperties"/> from the stored <see cref="AuthenticationTicket"/>.</returns>
     /// <exception cref="JsonException">Throws a <see cref="JsonException"/> during deserialization problems.</exception>
-    private static AuthenticationProperties ReadAuthenticationProperties(ref Utf8JsonReader reader)
+    private static AuthenticationProperties ReadAuthenticationProperties(ref Utf8JsonReader reader, JsonNamingPolicy policy)
     {
         // Read "Properties" property name
-        ReadPropertyName(ref reader, nameof(AuthenticationTicket.Properties));
+        ReadPropertyName(ref reader, policy.ConvertName(nameof(AuthenticationTicket.Properties)));
 
         // Read "Properties" property value
-        ReadPropertyValue(ref reader, nameof(AuthenticationTicket.Properties), JsonTokenType.StartObject);
+        ReadPropertyValue(ref reader, policy.ConvertName(nameof(AuthenticationTicket.Properties)), JsonTokenType.StartObject);
 
         // Read "Items" property name
-        ReadPropertyName(ref reader, nameof(AuthenticationTicket.Properties.Items));
+        ReadPropertyName(ref reader, policy.ConvertName(nameof(AuthenticationTicket.Properties.Items)));
 
         // Read "Items" property value
-        ReadPropertyValue(ref reader, nameof(AuthenticationTicket.Properties.Items), JsonTokenType.StartObject);
+        ReadPropertyValue(ref reader, policy.ConvertName(nameof(AuthenticationTicket.Properties.Items)), JsonTokenType.StartObject);
 
         Dictionary<string, string?> items = [];
 
@@ -383,13 +383,17 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
         // Start Authentication Ticket
         writer.WriteStartObject();
 
+        JsonNamingPolicy policy = options.PropertyNamingPolicy
+            ?? JsonSerializerOptions.Default.PropertyNamingPolicy
+            ?? JsonNamingPolicy.SnakeCaseLower;
+
         // Authentication Scheme
-        writer.WriteString(nameof(ticket.AuthenticationScheme), ticket.AuthenticationScheme);
+        writer.WriteString(policy.ConvertName(nameof(ticket.AuthenticationScheme)), ticket.AuthenticationScheme);
 
         // Claims Principal
-        WriteClaimsPrincipal(writer, ticket);
+        WriteClaimsPrincipal(writer, ticket, policy);
 
-        WriteAuthenticationProperties(writer, ticket);
+        WriteAuthenticationProperties(writer, ticket, policy);
 
         // End Authentication Ticket
         writer.WriteEndObject();
@@ -400,10 +404,10 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
     /// </summary>
     /// <param name="writer">The UTF-8 JSON writer.</param>
     /// <param name="ticket">The <see cref="AuthenticationTicket"/> to write the principal from.></param>
-    private static void WriteClaimsPrincipal(Utf8JsonWriter writer, AuthenticationTicket ticket)
+    private static void WriteClaimsPrincipal(Utf8JsonWriter writer, AuthenticationTicket ticket, JsonNamingPolicy policy)
     {
         // Start Claims Principal
-        writer.WriteStartObject(nameof(ticket.Principal));
+        writer.WriteStartObject(policy.ConvertName(nameof(ticket.Principal)));
 
         if (ticket.Principal.Identities.Any())
         {
@@ -412,12 +416,12 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
             // the Principal.Claims as both are derived at run-time from the Identities.
 
             // Start Identities
-            writer.WriteStartArray(nameof(ticket.Principal.Identities));
+            writer.WriteStartArray(policy.ConvertName(nameof(ticket.Principal.Identities)));
 
             foreach (ClaimsIdentity identity in ticket.Principal.Identities)
             {
                 // Write Identity
-                WriteClaimsIdentity(writer, identity);
+                WriteClaimsIdentity(writer, identity, policy);
             }
 
             // End Identities
@@ -433,29 +437,29 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
     /// </summary>
     /// <param name="writer">The UTF-8 JSON writer.</param>
     /// <param name="identity">The <see cref="ClaimsIdentity"/> to write as JSON.</param>
-    private static void WriteClaimsIdentity(Utf8JsonWriter writer, ClaimsIdentity identity)
+    private static void WriteClaimsIdentity(Utf8JsonWriter writer, ClaimsIdentity identity, JsonNamingPolicy policy)
     {
         // Start Identity
         writer.WriteStartObject();
 
         if (identity.AuthenticationType is not null)
         {
-            writer.WriteString(nameof(identity.AuthenticationType), identity.AuthenticationType);
+            writer.WriteString(policy.ConvertName(nameof(identity.AuthenticationType)), identity.AuthenticationType);
         }
 
         // We do NOT need to write the identity.Name or identity.IsAuthenticated
         // as these are both also derived from the Claims at run-time.
 
-        writer.WriteString(nameof(identity.NameClaimType), identity.NameClaimType);
-        writer.WriteString(nameof(identity.RoleClaimType), identity.RoleClaimType);
+        writer.WriteString(policy.ConvertName(nameof(identity.NameClaimType)), identity.NameClaimType);
+        writer.WriteString(policy.ConvertName(nameof(identity.RoleClaimType)), identity.RoleClaimType);
 
         // Start Claims
-        writer.WriteStartArray(nameof(identity.Claims));
+        writer.WriteStartArray(policy.ConvertName(nameof(identity.Claims)));
 
         foreach (Claim claim in identity.Claims)
         {
             // Write Claim
-            WriteClaim(writer, claim);
+            WriteClaim(writer, claim, policy);
         }
 
         // End Claims
@@ -470,25 +474,27 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
     /// </summary>
     /// <param name="writer">The UTF-8 JSON writer.</param>
     /// <param name="claim">The <see cref="Claim"/> to write as JSON.</param>
-    private static void WriteClaim(Utf8JsonWriter writer, Claim claim)
+    private static void WriteClaim(Utf8JsonWriter writer, Claim claim, JsonNamingPolicy policy)
     {
         // Start Claim
         writer.WriteStartObject();
 
-        writer.WriteString(nameof(claim.Issuer), claim.Issuer);
+        writer.WriteString(policy.ConvertName(nameof(claim.Issuer)), claim.Issuer);
 
         if (claim.OriginalIssuer.Equals(claim.Issuer, StringComparison.Ordinal) is false)
         {
             // We only need to store an 'Original Issuer' of a
             // Claim if it differs to it's current issuer.
-            writer.WriteString(nameof(claim.OriginalIssuer), claim.OriginalIssuer);
+            writer.WriteString(policy.ConvertName(nameof(claim.OriginalIssuer)), claim.OriginalIssuer);
         }
 
-        writer.WriteString(nameof(claim.Type), claim.Type);
+        writer.WriteString(policy.ConvertName(nameof(claim.Type)), claim.Type);
+
+        string propertyName = policy.ConvertName(nameof(claim.Value));
 
         if (claim.ValueType.Equals(ClaimValueTypes.String))
         {
-            writer.WriteString(nameof(claim.Value), claim.Value);
+            writer.WriteString(propertyName, claim.Value);
         }
         else
         {
@@ -496,23 +502,30 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
             // when it  differs from the default string value.
             // This needs to appear before the 'Value' so we know
             // how to convert on Deserialization.
-            writer.WriteString(nameof(claim.ValueType), claim.ValueType);
+            writer.WriteString(policy.ConvertName(nameof(claim.ValueType)), claim.ValueType);
 
-            // TODO: Plenty more Claim Value types that we may want to
-            // implement here as and when required, e.g. double, datetime etc...
             switch (claim.ValueType)
             {
                 case ClaimValueTypes.Boolean:
-                    writer.WriteBoolean(nameof(claim.Value), Convert.ToBoolean(claim.Value));
+                    writer.WriteBoolean(propertyName, Convert.ToBoolean(claim.Value));
+                    break;
+
+                case ClaimValueTypes.DateTime:
+                    // ISO 8601 w/ UTC Time-Zone)
+                    writer.WriteString(propertyName, DateTime.Parse(claim.Value).ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", CultureInfo.InvariantCulture));
+                    break;
+
+                case ClaimValueTypes.Double:
+                    writer.WriteNumber(propertyName, Convert.ToDouble(claim.Value));
                     break;
 
                 case ClaimValueTypes.Integer:
                 case ClaimValueTypes.Integer32:
-                    writer.WriteNumber(nameof(claim.Value), Convert.ToInt32(claim.Value));
+                    writer.WriteNumber(propertyName, Convert.ToInt32(claim.Value));
                     break;
 
                 case ClaimValueTypes.Integer64:
-                    writer.WriteNumber(nameof(claim.Value), Convert.ToInt64(claim.Value));
+                    writer.WriteNumber(propertyName, Convert.ToInt64(claim.Value));
                     break;
             }
         }
@@ -527,13 +540,13 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
     /// </summary>
     /// <param name="writer">The UTF-8 JSON writer.</param>
     /// <param name="ticket">The <see cref="AuthenticationTicket"/> to write the <see cref="AuthenticationProperties"/> from.</param>
-    private static void WriteAuthenticationProperties(Utf8JsonWriter writer, AuthenticationTicket ticket)
+    private static void WriteAuthenticationProperties(Utf8JsonWriter writer, AuthenticationTicket ticket, JsonNamingPolicy policy)
     {
         // Start Authentication Properties
-        writer.WriteStartObject(nameof(ticket.Properties));
+        writer.WriteStartObject(policy.ConvertName(nameof(ticket.Properties)));
 
         // Start Item Dictionary
-        writer.WriteStartObject(nameof(ticket.Properties.Items));
+        writer.WriteStartObject(policy.ConvertName(nameof(ticket.Properties.Items)));
 
         foreach (KeyValuePair<string, string?> item in ticket.Properties.Items)
         {
@@ -541,6 +554,9 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
             // we are expecting null values to be included.
             if (item.Key is null || item.Value is null) continue;
 
+            // I don't think we can serialize the 'Properties' here with the
+            // JsonNamingPolicy enforced because it likely would be the same
+            // once deserialized which could have some unknown effects.
             writer.WriteString(item.Key, item.Value);
         }
 
