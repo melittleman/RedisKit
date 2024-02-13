@@ -27,7 +27,7 @@ public sealed class RedisConnectionProviderTests
     public void GetRequiredConnection_WithNullName_ShouldThrowArgumentException()
     {
         // Arrange, Act & Assert
-        Assert.Throws<ArgumentException>(() => _provider.GetRequiredConnection(null!));
+        Assert.Throws<ArgumentNullException>(() => _provider.GetRequiredConnection(null!));
     }
 
     [Fact]
