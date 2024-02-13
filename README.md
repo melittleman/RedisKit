@@ -1,5 +1,5 @@
 # RedisKit
-> A .NET Standard 2.1 helper library for common Redis client functionality. This project is very much still a work in progress.
+> A .NET 8 helper library for common Redis client functionality.
 
 This package aims to build upon [StackExchange.Redis](https://github.com/StackExchange/StackExchange.Redis) and [NRedisStack](https://github.com/redis/NRedisStack) in order to provide all the functionality needed to get up and running with a new project utilizing Redis as fast as possible. 
 

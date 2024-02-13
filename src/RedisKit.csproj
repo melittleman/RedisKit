@@ -6,15 +6,15 @@
     <Nullable>enable</Nullable>
 	
     <PackageId>RedisKit</PackageId>
-    <PackageDescription>.NET Standard 2.1 Redis client helper library.</PackageDescription>
-    <PackageTags>redis,netstandard,dotnet,melittleman</PackageTags>
+    <PackageDescription>A .NET 8 helper library for common Redis client functionality.</PackageDescription>
+    <PackageTags>redis,dotnet,melittleman</PackageTags>
     <PackageIcon>icon.png</PackageIcon>
     <PackageProjectUrl>https://github.com/melittleman/RedisKit</PackageProjectUrl>
     <RepositoryUrl>https://github.com/melittleman/RedisKit</RepositoryUrl>
 	
     <Title>RedisKit</Title>
     <Authors>Matt Lindsay</Authors>
-    <Description>.NET 8 library for common Redis client helper functionality.</Description>
+    <Description>A .NET 8 helper library for common Redis client functionality.</Description>
   </PropertyGroup>
 
   <ItemGroup>
