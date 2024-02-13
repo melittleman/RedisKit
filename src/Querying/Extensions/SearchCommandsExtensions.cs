@@ -31,9 +31,14 @@ public static class SearchCommandsExtensions
         // force a re-creation (due to schema changes within the document).
         if (forceRecreate)
         {
-            // Note that this returns false when the index doesn't
-            // exist so we have to assume success regardless.
-            await search.DropIndexAsync(indexName);
+            try
+            {
+                await search.DropIndexAsync(indexName);
+            }
+            catch (RedisServerException rse) when (rse.Message is "Unknown Index name")
+            {
+                // Index already doesn't exist...
+            }
         }
 
         // We can return true here if the Index already exists
@@ -48,10 +53,6 @@ public static class SearchCommandsExtensions
         {
             // Index already exists, another process must have just got there?
             return true;
-        }
-        catch (Exception)
-        {
-            return false;
         }
     }
 
@@ -87,6 +88,8 @@ public static class SearchCommandsExtensions
     {
         SearchFilter filter = new(1, 1);
 
+        // TODO: try catch...
+
         SearchResult result = await search.SearchAsync(indexName, GetPagedQuery(searchTerm, filter));
 
         return result?.Documents is not null
@@ -116,6 +119,8 @@ public static class SearchCommandsExtensions
         // Provide a default value of starting at
         // page 1, with 100 results per page.
         filter ??= new SearchFilter(1, 100);
+
+        // TODO: try catch...
 
         IPagedList<T> results = await search.SearchAsync<T>(indexName, "*", filter);
 

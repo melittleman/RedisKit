@@ -18,19 +18,27 @@ public sealed record RedisTicketStore : ITicketStore
 {
     private const string SessionId = "session_id";
 
-    private readonly RedisAuthenticationTicketOptions _options;
+    private readonly RedisAuthenticationTicketOptions _ticketOptions;
+    private readonly RedisJsonOptions _jsonOptions;
     private readonly IRedisConnection _redis;
 
     private IDatabase Db => _redis.Db;
 
     private JsonCommands Json => Db.JSON();
 
-    private string KeyPrefix => _options.KeyPrefix;
+    private string KeyPrefix => _ticketOptions.KeyPrefix;
 
-    public RedisTicketStore(IRedisConnection redis, RedisAuthenticationTicketOptions options)
+    public RedisTicketStore(
+        IRedisConnection redis,
+        RedisAuthenticationTicketOptions ticketOptions,
+        RedisJsonOptions jsonOptions)
     {
         _redis = redis ?? throw new ArgumentNullException(nameof(redis));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _ticketOptions = ticketOptions ?? throw new ArgumentNullException(nameof(ticketOptions));
+
+        // The RedisJsonOptions 'should' always contain an instance of AuthenticationTicketJsonConverter
+        // if the .AddRedisTicketStore extension was used, but should we actually be checking this?
+        _jsonOptions = jsonOptions ?? throw new ArgumentNullException(nameof(jsonOptions));
     }
 
     /// <inheritdoc />
@@ -64,7 +72,7 @@ public sealed record RedisTicketStore : ITicketStore
 
         string redisKey = GetKey(key);
 
-        if (await Json.SetAsync(redisKey, "$", ticket))
+        if (await Json.SetAsync(redisKey, "$", ticket, serializerOptions: _jsonOptions.Serializer))
         {
             if (ticket.Properties.ExpiresUtc.HasValue)
             {
@@ -78,7 +86,7 @@ public sealed record RedisTicketStore : ITicketStore
     {
         if (string.IsNullOrEmpty(key)) throw new ArgumentException("Cannot be null or empty.", nameof(key));
 
-        return Json.GetAsync<AuthenticationTicket>(GetKey(key));
+        return Json.GetAsync<AuthenticationTicket>(GetKey(key), serializerOptions: _jsonOptions.Serializer);
     }
 
     /// <inheritdoc />

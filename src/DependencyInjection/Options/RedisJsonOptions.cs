@@ -4,5 +4,5 @@ namespace RedisKit.DependencyInjection.Options;
 
 public sealed record RedisJsonOptions
 {
-    public JsonSerializerOptions Serializer { get; set; } = new JsonSerializerOptions();
+    public JsonSerializerOptions Serializer { get; } = new();
 }

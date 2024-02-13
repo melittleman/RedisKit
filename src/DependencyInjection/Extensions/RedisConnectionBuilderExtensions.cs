@@ -1,6 +1,5 @@
-﻿using System.Text.Json;
-
-using Microsoft.Extensions.Hosting;
+﻿using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -94,22 +93,28 @@ public static class RedisConnectionBuilderExtensions
     {
         if (builder is null) throw new ArgumentNullException(nameof(builder));
 
-        RedisAuthenticationTicketOptions options = new();
-        configure?.Invoke(options);
+        RedisAuthenticationTicketOptions ticketOptions = new();
+        configure?.Invoke(ticketOptions);
 
         builder.Services.TryAddTransient<ITicketStore>(s =>
         {
             IRedisConnectionProvider provider = s.GetRequiredService<IRedisConnectionProvider>();
+            IOptionsMonitor<RedisJsonOptions> optionsMonitor = s.GetRequiredService<IOptionsMonitor<RedisJsonOptions>>();
 
             IRedisConnection connection = provider.GetRequiredConnection(builder.Name);
+            RedisJsonOptions jsonOptions = optionsMonitor.Get(builder.Name);
 
-            return new RedisTicketStore(connection, options);
+            return new RedisTicketStore(connection, ticketOptions, jsonOptions);
         });
 
-        builder.Services.AddOptions<CookieAuthenticationOptions>(options.CookieSchemeName).Configure<ITicketStore>((options, store) =>
+        builder.Services.AddOptions<CookieAuthenticationOptions>(ticketOptions.CookieSchemeName).Configure<ITicketStore>((options, store) =>
         {
             options.SessionStore = store;
         });
+
+        // Whilst this isn't technically required because the RedisTicketStore is hard coded
+        // to use this converter, it seems sensible to include here as a default in case we want 
+        // the user to be able to override in the future.
 
         return builder.ConfigureRedisJson(options =>
         {
@@ -125,21 +130,6 @@ public static class RedisConnectionBuilderExtensions
         if (configure is null) throw new ArgumentNullException(nameof(configure));
 
         builder.Services.Configure(builder.Name, configure);
-
-        return builder;
-    }
-
-    public static IRedisConnectionBuilder ConfigureRedisJson(
-        this IRedisConnectionBuilder builder,
-        JsonSerializerOptions jsonSerializer)
-    {
-        if (builder is null) throw new ArgumentNullException(nameof(builder));
-        if (jsonSerializer is null) throw new ArgumentNullException(nameof(jsonSerializer));
-
-        builder.Services.Configure<RedisJsonOptions>(builder.Name, options =>
-        {
-            options.Serializer = jsonSerializer;
-        });
 
         return builder;
     }

@@ -30,36 +30,6 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    ///     Adds an instance of <see cref="RedisJsonOptions"/> to the DI container,
-    ///     based on the provided <see cref="JsonSerializerOptions"/>.
-    /// </summary>
-    /// <param name="services">The DI container Services collection.</param>
-    /// <param name="options">
-    ///     Allows a fully customizable <see cref="JsonSerializerOptions"/>
-    ///     instance to be passed to the Redis JSON serilializer.
-    /// </param>
-    /// <returns>
-    ///     The <paramref name="services"/> to be used for further configuration.
-    /// </returns>
-    /// <exception cref="ArgumentNullException">
-    ///     Thrown when <paramref name="services" /> is null.
-    /// </exception>
-    public static IServiceCollection ConfigureRedisJson(
-        this IServiceCollection services,
-        JsonSerializerOptions jsonSerializer)
-    {
-        if (services is null) throw new ArgumentNullException(nameof(services));
-        if (jsonSerializer is null) throw new ArgumentNullException(nameof(jsonSerializer));
-
-        services.Configure<RedisJsonOptions>(options =>
-        {
-            options.Serializer = jsonSerializer;
-        });
-
-        return services;
-    }
-
-    /// <summary>
     ///     Adds a named Redis connection to the DI services collection within the singleton <see cref="DefaultRedisConnectionProvider" />.
     /// </summary>
     /// <remarks>
