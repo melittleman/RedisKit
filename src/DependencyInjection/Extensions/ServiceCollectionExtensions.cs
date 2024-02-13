@@ -21,8 +21,8 @@ public static class ServiceCollectionExtensions
         this IServiceCollection services,
         Action<RedisJsonOptions> configure)
     {
-        if (services is null) throw new ArgumentNullException(nameof(services));
-        if (configure is null) throw new ArgumentNullException(nameof(configure));
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(configure);
 
         services.Configure(configure);
 
@@ -51,8 +51,8 @@ public static class ServiceCollectionExtensions
         string name,
         Action<RedisConnectionOptions>? configure = null)
     {
-        if (name is null) throw new ArgumentNullException(nameof(name));
-        if (services is null) throw new ArgumentNullException(nameof(services));
+        ArgumentNullException.ThrowIfNull(name);
+        ArgumentNullException.ThrowIfNull(services);
 
         // Required dependencies
         services.AddOptions();

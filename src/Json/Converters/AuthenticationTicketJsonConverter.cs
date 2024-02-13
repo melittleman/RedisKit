@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 
 namespace RedisKit.Json.Converters;
 
@@ -27,7 +28,8 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
 
         // Read "AuthenticationScheme" property
         string authenticationScheme = GetStringProperty(ref reader, nameof(AuthenticationTicket.AuthenticationScheme))
-                                      ?? CookieAuthenticationDefaults.AuthenticationScheme;
+                                      ?? CookieAuthenticationDefaults.AuthenticationScheme
+                                      ?? IdentityConstants.ApplicationScheme;
 
         // Read "Principal" property
         ClaimsPrincipal principal = ReadClaimsPrincipal(ref reader);
@@ -67,7 +69,7 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
         // Read "Identities" property value
         ReadPropertyValue(ref reader, nameof(AuthenticationTicket.Principal.Identities), JsonTokenType.StartArray);
 
-        IList<ClaimsIdentity> identities = new List<ClaimsIdentity>();
+        List<ClaimsIdentity> identities = [];
 
         while (reader.Read())
         {
@@ -111,7 +113,7 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
     /// </summary>
     /// <param name="reader">The UTF-8 JSON reader.</param>
     /// <returns>A new IEnumerable of <see cref="Claim"/>s from the stored <see cref="AuthenticationTicket"/>.</returns>
-    private static IEnumerable<Claim> ReadClaims(ref Utf8JsonReader reader)
+    private static List<Claim> ReadClaims(ref Utf8JsonReader reader)
     {
         // Read "Claims" property name
         ReadPropertyName(ref reader, nameof(ClaimsIdentity.Claims));
@@ -119,7 +121,7 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
         // Read "Claims" property value
         ReadPropertyValue(ref reader, nameof(ClaimsIdentity.Claims), JsonTokenType.StartArray);
 
-        IList<Claim> claims = new List<Claim>();
+        List<Claim> claims = [];
 
         while (reader.Read())
         {
@@ -533,7 +535,7 @@ internal sealed class AuthenticationTicketJsonConverter : JsonConverter<Authenti
         // Start Item Dictionary
         writer.WriteStartObject(nameof(ticket.Properties.Items));
 
-        foreach (KeyValuePair<string, string> item in ticket.Properties.Items)
+        foreach (KeyValuePair<string, string?> item in ticket.Properties.Items)
         {
             // We may want to check 'HandleNull' here first in case
             // we are expecting null values to be included.

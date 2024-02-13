@@ -7,7 +7,7 @@ public static class HashEntryExtensions
 {
     public static HashEntry[] ToHashEntries<T>(this T value)
     {
-        if (value is null) throw new ArgumentNullException(nameof(value));
+        ArgumentNullException.ThrowIfNull(value);
 
         PropertyInfo[] properties = value
             .GetType()
@@ -23,12 +23,12 @@ public static class HashEntryExtensions
 
     public static T? FromHashEntries<T>(this HashEntry[] entries)
     {
-        if (entries is null) throw new ArgumentNullException(nameof(entries));
-        if (entries.Any() is false) return default;
+        ArgumentNullException.ThrowIfNull(entries);
+        if (entries.Length is 0) return default;
 
         PropertyInfo[] properties = typeof(T).GetProperties();
 
-        T value = (T)Activator.CreateInstance(typeof(T));
+        T? value = (T?)Activator.CreateInstance(typeof(T));
 
         foreach (PropertyInfo property in properties)
         {

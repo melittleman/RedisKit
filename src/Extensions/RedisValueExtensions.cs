@@ -6,8 +6,10 @@ namespace RedisKit.Extensions;
 
 internal static class RedisValueExtensions
 {
-    internal static RedisValue GetRedisValue(this object property)
+    internal static RedisValue GetRedisValue(this object? property)
     {
+        if (property is null) return RedisValue.Null;
+
         return property switch
         {
             IEnumerable<object> => JsonSerializer.Serialize(property),
@@ -20,7 +22,7 @@ internal static class RedisValueExtensions
 
     internal static object? GetProperty(this RedisValue value, Type propertyType)
     {
-        if (propertyType is null) throw new ArgumentNullException(nameof(propertyType));
+        ArgumentNullException.ThrowIfNull(propertyType);
 
         if (value.IsNull) return null;
 

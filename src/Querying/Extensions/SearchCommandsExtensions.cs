@@ -21,10 +21,10 @@ public static class SearchCommandsExtensions
         Schema schema,
         bool forceRecreate = false)
     {
-        if (search is null) throw new ArgumentNullException(nameof(search));
-        if (indexName is null) throw new ArgumentNullException(nameof(indexName));
-        if (createParams is null) throw new ArgumentNullException(nameof(createParams));
-        if (schema is null) throw new ArgumentNullException(nameof(schema));
+        ArgumentNullException.ThrowIfNull(search);
+        ArgumentNullException.ThrowIfNull(indexName);
+        ArgumentNullException.ThrowIfNull(createParams);
+        ArgumentNullException.ThrowIfNull(schema);
 
         // I think there's potentially a way to update schemas within an index,
         // but for the time being we will just drop the whole index if we need to
@@ -63,10 +63,10 @@ public static class SearchCommandsExtensions
         SearchFilter filter,
         params string[] highlightFields)
     {
-        if (search is null) throw new ArgumentNullException(nameof(search));
-        if (indexName is null) throw new ArgumentNullException(nameof(indexName));
-        if (searchTerm is null) throw new ArgumentNullException(nameof(searchTerm));
-        if (filter is null) throw new ArgumentNullException(nameof(filter));
+        ArgumentNullException.ThrowIfNull(search);
+        ArgumentNullException.ThrowIfNull(indexName);
+        ArgumentNullException.ThrowIfNull(searchTerm);
+        ArgumentNullException.ThrowIfNull(filter);
 
         Query query = GetPagedQuery(searchTerm, filter, false, highlightFields);
 
@@ -86,6 +86,10 @@ public static class SearchCommandsExtensions
 
     public static async Task<T?> SearchSingleAsync<T>(this SearchCommands search, string indexName, string searchTerm)
     {
+        ArgumentNullException.ThrowIfNull(search);
+        ArgumentNullException.ThrowIfNull(indexName);
+        ArgumentNullException.ThrowIfNull(searchTerm);
+
         SearchFilter filter = new(1, 1);
 
         // TODO: try catch...
@@ -116,6 +120,9 @@ public static class SearchCommandsExtensions
     /// </remarks>
     public static async Task<ICollection<T>> SearchAllAsync<T>(this SearchCommands search, string indexName, SearchFilter? filter = null)
     {
+        ArgumentNullException.ThrowIfNull(search);
+        ArgumentNullException.ThrowIfNull(indexName);
+
         // Provide a default value of starting at
         // page 1, with 100 results per page.
         filter ??= new SearchFilter(1, 100);
@@ -157,8 +164,8 @@ public static class SearchCommandsExtensions
 
     private static async Task<bool> IndexExistsAsync(SearchCommands search, string indexName)
     {
-        if (search is null) throw new ArgumentNullException(nameof(search));
-        if (indexName is null) throw new ArgumentNullException(nameof(indexName));
+        ArgumentNullException.ThrowIfNull(search);
+        ArgumentNullException.ThrowIfNull(indexName);
 
         try
         {
@@ -185,8 +192,8 @@ public static class SearchCommandsExtensions
         bool summarize = false,
         params string[] highlightFields)
     {
-        if (searchTerm is null) throw new ArgumentNullException(nameof(searchTerm));
-        if (filter is null) throw new ArgumentNullException(nameof(filter));
+        ArgumentNullException.ThrowIfNull(searchTerm);
+        ArgumentNullException.ThrowIfNull(filter);
 
         Query builder;
 
@@ -208,8 +215,8 @@ public static class SearchCommandsExtensions
         bool summarize = false,
         params string[] highlights)
     {
-        if (searchTerm is null) throw new ArgumentNullException(nameof(searchTerm));
-        if (filter is null) throw new ArgumentNullException(nameof(filter));
+        ArgumentNullException.ThrowIfNull(searchTerm);
+        ArgumentNullException.ThrowIfNull(filter);
 
         Query builder = GetDefaultQuery(searchTerm, summarize, highlights);
 
@@ -223,11 +230,11 @@ public static class SearchCommandsExtensions
         bool summarize = false,
         params string[] highlights)
     {
-        if (searchTerm is null) throw new ArgumentNullException(nameof(searchTerm));
+        ArgumentNullException.ThrowIfNull(searchTerm);
 
         Query builder = new(searchTerm);
 
-        if (highlights.Any())
+        if (highlights.Length > 0)
         {
             // https://oss.redislabs.com/redisearch/Highlight/#highlighting
             builder.HighlightFields(new Query.HighlightTags("<span class=\"search-term-found\">", "</span>"), highlights);
@@ -244,7 +251,7 @@ public static class SearchCommandsExtensions
         return builder;
     }
 
-    private static ICollection<T> ConvertTo<T>(ICollection<Document> documents)
+    private static List<T> ConvertTo<T>(ICollection<Document> documents)
     {
         List<T> results = [];
 

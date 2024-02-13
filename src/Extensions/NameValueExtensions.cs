@@ -7,7 +7,7 @@ public static class NameValueExtensions
 {
     public static NameValueEntry[] ToNameValueEntries<T>(this T value)
     {
-        if (value is null) throw new ArgumentNullException(nameof(value));
+        ArgumentNullException.ThrowIfNull(value);
 
         PropertyInfo[] properties = value
             .GetType()
@@ -17,14 +17,14 @@ public static class NameValueExtensions
             .Where(property => property.GetValue(value) is not null && property.CanRead)
             .Select(property => new NameValueEntry(
                 property.Name,
-                property.GetValue(value)?.GetRedisValue() ?? string.Empty)
+                property.GetValue(value).GetRedisValue())
             ).ToArray();
     }
 
     public static T? FromNameValueEntries<T>(this NameValueEntry[] entries)
     {
-        if (entries is null) throw new ArgumentNullException(nameof(entries));
-        if (entries.Any() is false) return default;
+        ArgumentNullException.ThrowIfNull(entries);
+        if (entries.Length is 0) return default;
 
         PropertyInfo[] properties = typeof(T).GetProperties();
 

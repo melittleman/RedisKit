@@ -44,7 +44,7 @@ public sealed record RedisTicketStore : ITicketStore
     /// <inheritdoc />
     public async Task<string> StoreAsync(AuthenticationTicket ticket)
     {
-        if (ticket is null) throw new ArgumentNullException(nameof(ticket));
+        ArgumentNullException.ThrowIfNull(ticket);
 
         string key = string.Empty;
 
@@ -54,9 +54,9 @@ public sealed record RedisTicketStore : ITicketStore
         {
             key = GetKey(ticket.Principal.FindFirst(JwtClaimTypes.SessionId)?.Value);
         }
-        else if (ticket.Properties.Items.ContainsKey(SessionId))
+        else if (ticket.Properties.Items.TryGetValue(SessionId, out string? value) && value is not null)
         {
-            key = GetKey(ticket.Properties.Items[SessionId]);
+            key = GetKey(value);
         }
 
         await RenewAsync(key, ticket);
@@ -67,8 +67,8 @@ public sealed record RedisTicketStore : ITicketStore
     /// <inheritdoc />
     public async Task RenewAsync(string key, AuthenticationTicket ticket)
     {
-        if (ticket is null) throw new ArgumentNullException(nameof(ticket));
-        if (string.IsNullOrEmpty(key)) throw new ArgumentException("Cannot be null or empty.", nameof(key));
+        ArgumentNullException.ThrowIfNull(ticket);
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
         string redisKey = GetKey(key);
 
@@ -84,7 +84,7 @@ public sealed record RedisTicketStore : ITicketStore
     /// <inheritdoc />
     public Task<AuthenticationTicket?> RetrieveAsync(string key)
     {
-        if (string.IsNullOrEmpty(key)) throw new ArgumentException("Cannot be null or empty.", nameof(key));
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
         return Json.GetAsync<AuthenticationTicket>(GetKey(key), serializerOptions: _jsonOptions.Serializer);
     }
@@ -92,7 +92,7 @@ public sealed record RedisTicketStore : ITicketStore
     /// <inheritdoc />
     public async Task RemoveAsync(string key)
     {
-        if (string.IsNullOrEmpty(key)) throw new ArgumentException("Cannot be null or empty.", nameof(key));
+        ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
         AuthenticationTicket? ticket = await RetrieveAsync(key);
 

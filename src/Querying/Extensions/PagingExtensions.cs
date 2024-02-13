@@ -13,7 +13,7 @@ public static class PagingExtensions
         short currentPage,
         byte resultsPerPage)
     {
-        if (source is null) throw new ArgumentNullException(nameof(source));
+        ArgumentNullException.ThrowIfNull(source);
 
         SearchFilter filter = new(currentPage, resultsPerPage);
 
@@ -22,8 +22,8 @@ public static class PagingExtensions
 
     public static IPagedList<T> ToPagedList<T>(this IEnumerable<T> source, long totalResults, SearchFilter filter)
     {
-        if (source is null) throw new ArgumentNullException(nameof(source));
-        if (filter is null) throw new ArgumentNullException(nameof(filter));
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(filter);
 
         IList<T> items = source.ToList();
 
@@ -32,8 +32,8 @@ public static class PagingExtensions
 
     public static IPagedList<T> ToPagedList<T>(this ICollection<T> source, long totalResults, SearchFilter filter)
     {
-        if (source is null) throw new ArgumentNullException(nameof(source));
-        if (filter is null) throw new ArgumentNullException(nameof(filter));
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(filter);
 
         IList<T> items = source.ToList();
 
@@ -42,8 +42,8 @@ public static class PagingExtensions
 
     public static IPagedList<T> ToPagedList<T>(this IList<T> source, long totalResults, SearchFilter filter)
     {
-        if (source is null) throw new ArgumentNullException(nameof(source));
-        if (filter is null) throw new ArgumentNullException(nameof(filter));
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(filter);
 
         return source.Count <= filter.Count
             ? new PagedList<T>(source, totalResults, filter)
@@ -52,7 +52,7 @@ public static class PagingExtensions
 
     public static PagedList<T> ToPagedList<T>(this IPagedList<T> source)
     {
-        if (source is null) throw new ArgumentNullException(nameof(source));
+        ArgumentNullException.ThrowIfNull(source);
 
         // An implicit / explicit operator for this
         // conversion might also be quite useful?

@@ -56,7 +56,7 @@ public static class StringExtensions
 
     public static bool TryGetEnum(this string source, Type type, out object value)
     {
-        if (Enum.TryParse(type, source, out object enumeration))
+        if (Enum.TryParse(type, source, out object? enumeration))
         {
             value = enumeration;
             return true;

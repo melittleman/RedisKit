@@ -33,7 +33,7 @@ internal sealed record DefaultRedisConnectionProvider : IRedisConnectionProvider
     /// <inheritdoc />
     public IRedisConnection GetRequiredConnection(string name)
     {
-        if (string.IsNullOrEmpty(name)) throw new ArgumentException("Must not be a null or empty value.", nameof(name));
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
         if (RedisConnections.TryGetValue(name, out RedisConnection? connection) && connection is not null)
         {
@@ -80,8 +80,8 @@ internal sealed record DefaultRedisConnectionProvider : IRedisConnectionProvider
     /// </exception>
     private bool AddConnection(string name, RedisConnection connection)
     {
-        if (string.IsNullOrEmpty(name)) throw new ArgumentException("Must not be a null or empty value.", nameof(name));
-        if (connection is null) throw new ArgumentNullException(nameof(connection));
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(connection);
 
         if (RedisConnections.ContainsKey(name))
             throw new InvalidOperationException($"Redis connection name '{name}' already exists!");

@@ -10,7 +10,7 @@ public static class DatabaseExtensions
 
     public static async Task<T?> HashGetAsync<T>(this IDatabase db, RedisKey key)
     {
-        if (db is null) throw new ArgumentNullException(nameof(db));
+        ArgumentNullException.ThrowIfNull(db);
 
         HashEntry[] entries = await db.HashGetAllAsync(key);
 
@@ -19,8 +19,8 @@ public static class DatabaseExtensions
 
     public static async Task<ICollection<T?>> HashGetAllAsync<T>(this IDatabase db, IReadOnlyCollection<RedisKey> keys)
     {
-        if (db is null) throw new ArgumentNullException(nameof(db));
-        if (keys is null) throw new ArgumentNullException(nameof(keys));
+        ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(keys);
 
         // A Redis 'Batch' is similar to a 'Transaction' in that they both use Pipelining to ensure
         // requests are sent through as one unit, thus reducing the possibility of unoptimized packet sizes.
@@ -40,7 +40,7 @@ public static class DatabaseExtensions
         return
         (
             from entries in completedTasks
-            where entries?.Any() is true
+            where entries?.Length > 0
             select entries.FromHashEntries<T>()
 
         ).ToList();
@@ -48,7 +48,7 @@ public static class DatabaseExtensions
 
     public static async Task<ICollection<T?>> HashGetAllFromSortedSetAsync<T>(this IDatabase db, RedisKey key) where T : ISortedSetEntry, IHashEntry
     {
-        if (db is null) throw new ArgumentNullException(nameof(db));
+        ArgumentNullException.ThrowIfNull(db);
 
         // TODO: There are a lot of different ways to range the Sorted Set by...
         // We should investigate further to decide on what the 'best' approach is.
@@ -61,8 +61,8 @@ public static class DatabaseExtensions
 
     public static async Task<bool> HashSetAndExpireAsync<T>(this IDatabase db, RedisKey key, T value, TimeSpan? expiry = null)
     {
-        if (db is null) throw new ArgumentNullException(nameof(db));
-        if (value is null) throw new ArgumentNullException(nameof(value));
+        ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(value);
 
         HashEntry[] hash = value.ToHashEntries();
         if (hash is null) return default;
@@ -80,8 +80,8 @@ public static class DatabaseExtensions
     // TODO: Need to introduce the ability to expire each Hash, maybe even with a different value?
     public static async Task<ICollection<T?>> HashSetAllAsync<T>(this IDatabase db, ICollection<T> values) where T : IHashEntry
     {
-        if (db is null) throw new ArgumentNullException(nameof(db));
-        if (values is null) throw new ArgumentNullException(nameof(values));
+        ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(values);
 
         ITransaction transaction = db.CreateTransaction();
 
@@ -105,8 +105,8 @@ public static class DatabaseExtensions
         RedisKey key,
         ICollection<T> values) where T : IHashEntry, ISortedSetEntry
     {
-        if (db is null) throw new ArgumentNullException(nameof(db));
-        if (values is null) throw new ArgumentNullException(nameof(values));
+        ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(values);
 
         ITransaction transaction = db.CreateTransaction();
 
@@ -135,8 +135,8 @@ public static class DatabaseExtensions
 
     public static async Task<T?> HashGetOrSetAsync<T>(this IDatabase db, RedisKey key, Func<Task<T?>> factory) where T : IHashEntry
     {
-        if (db is null) throw new ArgumentNullException(nameof(db));
-        if (factory is null) throw new ArgumentNullException(nameof(factory));
+        ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(factory);
 
         T? result = await HashGetAsync<T>(db, key);
         if (result is not null) return result;
@@ -154,13 +154,13 @@ public static class DatabaseExtensions
         RedisKey key,
         Func<Task<ICollection<T>?>> factory) where T : ISortedSetEntry, IHashEntry
     {
-        if (db is null) throw new ArgumentNullException(nameof(db));
-        if (factory is null) throw new ArgumentNullException(nameof(factory));
+        ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(factory);
 
         ICollection<T?> results = await HashGetAllFromSortedSetAsync<T>(db, key);
 
         // TODO: Did we find them all?
-        if (results is not null && results.Any()) return results;
+        if (results is not null && results.Count > 0) return results;
 
         ICollection<T>? values = await factory();
         if (values is null) return Array.Empty<T>();
@@ -173,8 +173,8 @@ public static class DatabaseExtensions
         IReadOnlyCollection<RedisKey> keys,
         Func<Task<ICollection<T>>> factory) where T : IHashEntry
     {
-        if (db is null) throw new ArgumentNullException(nameof(db));
-        if (factory is null) throw new ArgumentNullException(nameof(factory));
+        ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(factory);
 
         ICollection<T?> results = await HashGetAllAsync<T>(db, keys);
 
@@ -192,8 +192,8 @@ public static class DatabaseExtensions
         IDatabase db,
         IReadOnlyCollection<SortedSetEntry> sets) where T : ISortedSetEntry, IHashEntry
     {
-        if (db is null) throw new ArgumentNullException(nameof(db));
-        if (sets is null) throw new ArgumentNullException(nameof(sets));
+        ArgumentNullException.ThrowIfNull(db);
+        ArgumentNullException.ThrowIfNull(sets);
 
         IReadOnlyCollection<RedisKey> keys = sets
             .Select(s => new RedisKey(s.Element.ToString()))
@@ -220,8 +220,8 @@ public static class DatabaseExtensions
 
     private static Task[] AddHashSetsToTransaction<T>(ITransaction tran, ICollection<T> values) where T : IHashEntry
     {
-        if (tran is null) throw new ArgumentNullException(nameof(tran));
-        if (values is null) throw new ArgumentNullException(nameof(values));
+        ArgumentNullException.ThrowIfNull(tran);
+        ArgumentNullException.ThrowIfNull(values);
 
         // TODO: If you await a transaction command, the connection 'hangs'. We should implement this pattern
         // lower down so it can be reused. https://stackoverflow.com/questions/25976231/stackexchange-redis-transaction-methods-freezes

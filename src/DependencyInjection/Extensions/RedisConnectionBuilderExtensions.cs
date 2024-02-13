@@ -27,8 +27,8 @@ public static class RedisConnectionBuilderExtensions
         IHostEnvironment env,
         Action<RedisDataProtectionOptions>? configure = null)
     {
-        if (env is null) throw new ArgumentNullException(nameof(env));
-        if (builder is null) throw new ArgumentNullException(nameof(builder));
+        ArgumentNullException.ThrowIfNull(env);
+        ArgumentNullException.ThrowIfNull(builder);
 
         RedisDataProtectionOptions dpOptions = new();
         configure?.Invoke(dpOptions);
@@ -91,7 +91,7 @@ public static class RedisConnectionBuilderExtensions
         this IRedisConnectionBuilder builder,
         Action<RedisAuthenticationTicketOptions>? configure = null)
     {
-        if (builder is null) throw new ArgumentNullException(nameof(builder));
+        ArgumentNullException.ThrowIfNull(builder);
 
         RedisAuthenticationTicketOptions ticketOptions = new();
         configure?.Invoke(ticketOptions);
@@ -126,8 +126,8 @@ public static class RedisConnectionBuilderExtensions
         this IRedisConnectionBuilder builder,
         Action<RedisJsonOptions> configure)
     {
-        if (builder is null) throw new ArgumentNullException(nameof(builder));
-        if (configure is null) throw new ArgumentNullException(nameof(configure));
+        ArgumentNullException.ThrowIfNull(builder);
+        ArgumentNullException.ThrowIfNull(configure);
 
         builder.Services.Configure(builder.Name, configure);
 
@@ -161,7 +161,7 @@ public static class RedisConnectionBuilderExtensions
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="builder"/> is null.</exception>
     public static IRedisConnectionBuilder AddRedisHealthCheck(this IRedisConnectionBuilder builder)
     {
-        if (builder is null) throw new ArgumentNullException(nameof(builder));
+        ArgumentNullException.ThrowIfNull(builder);
 
         builder.Services
             .AddHealthChecks()
@@ -174,7 +174,7 @@ public static class RedisConnectionBuilderExtensions
 
                 return new RedisHealthCheck(connection, logger);
 
-            }, HealthStatus.Unhealthy, new[] { "redis" }));
+            }, HealthStatus.Unhealthy, [ "redis" ]));
 
         return builder;
     }
@@ -185,7 +185,7 @@ public static class RedisConnectionBuilderExtensions
         this IRedisConnectionBuilder builder,
         Action<RedisMessagingOptions>? configure = null)
     {
-        if (builder is null) throw new ArgumentNullException(nameof(builder));
+        ArgumentNullException.ThrowIfNull(builder);
 
         RedisMessagingOptions messagingOptions = new();
         configure?.Invoke(messagingOptions);
@@ -208,7 +208,7 @@ public static class RedisConnectionBuilderExtensions
         this IRedisConnectionBuilder builder,
         Action<RedisMessagingOptions>? configure = null)
     {
-        if (builder is null) throw new ArgumentNullException(nameof(builder));
+        ArgumentNullException.ThrowIfNull(builder);
 
         RedisMessagingOptions messagingOptions = new();
         configure?.Invoke(messagingOptions);
@@ -230,7 +230,7 @@ public static class RedisConnectionBuilderExtensions
         this IRedisConnectionBuilder builder,
         Action<StackExchangeRedisInstrumentationOptions> configure)
     {
-        if (builder is null) throw new ArgumentNullException(nameof(builder));
+        ArgumentNullException.ThrowIfNull(builder);
 
         builder.Services.AddOpenTelemetry().WithTracing(b => b.AddRedisInstrumentation($"Redis:{builder.Name}", null, configure).ConfigureRedisInstrumentation((s, i) =>
         {
