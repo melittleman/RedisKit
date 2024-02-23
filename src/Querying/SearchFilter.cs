@@ -13,7 +13,17 @@ public sealed record SearchFilter
     private byte _pageSize = 25;
 
     /// <summary>
-    ///     The page number of results to retrieve
+    ///     The search term to apply and filter results by.
+    /// </summary>
+    /// <remarks>
+    ///     If not specified, defaults to null which will
+    ///     return all results in the indexed collection.
+    /// </remarks>
+    [JsonPropertyName("query")]
+    public string? Query { get; set; } = null;
+
+    /// <summary>
+    ///     The page number of results to retrieve.
     /// </summary>
     /// <remarks>
     ///     If not specified, defaults to 1.
@@ -39,11 +49,11 @@ public sealed record SearchFilter
     }
 
     /// <summary>
-    ///     The field name to order results by.
+    ///     The property or field name to order results by.
     /// </summary>
     /// <remarks>
-    ///     If not specified, will be returned in
-    ///     the same order they are retrieved.
+    ///     If not specified, defaults to null and will be 
+    ///     returned in the same order they are retrieved.
     /// </remarks>
     [JsonPropertyName("order_by")]
     public string? OrderBy { get; set; } = null;
@@ -54,6 +64,8 @@ public sealed record SearchFilter
     /// <remarks>
     ///     For example; order by created date descending
     ///     to prioritize newly created results first.
+    ///     
+    ///     If not specified, defaults to <see cref="SortDirection.Ascending" />
     /// </remarks>
     [JsonPropertyName("sort_by")]
     public SortDirection SortBy { get; set; } = SortDirection.Ascending;
