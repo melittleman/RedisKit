@@ -59,16 +59,14 @@ public static class SearchCommandsExtensions
     public static async Task<IPagedList<T>> SearchAsync<T>(
         this SearchCommands search,
         string indexName,
-        string searchTerm,
         SearchFilter filter,
         params string[] highlightFields)
     {
         ArgumentNullException.ThrowIfNull(search);
         ArgumentNullException.ThrowIfNull(indexName);
-        ArgumentNullException.ThrowIfNull(searchTerm);
         ArgumentNullException.ThrowIfNull(filter);
 
-        Query query = GetPagedQuery(searchTerm, filter, false, highlightFields);
+        Query query = GetPagedQuery(filter, false, highlightFields);
 
         try
         {
@@ -84,17 +82,17 @@ public static class SearchCommandsExtensions
         }
     }
 
-    public static async Task<T?> SearchSingleAsync<T>(this SearchCommands search, string indexName, string searchTerm)
+    public static async Task<T?> SearchSingleAsync<T>(this SearchCommands search, string indexName, string searchQuery)
     {
         ArgumentNullException.ThrowIfNull(search);
         ArgumentNullException.ThrowIfNull(indexName);
-        ArgumentNullException.ThrowIfNull(searchTerm);
+        ArgumentNullException.ThrowIfNull(searchQuery);
 
-        SearchFilter filter = new(1, 1);
+        SearchFilter filter = new(page: 1, count: 1, query: searchQuery);
 
         // TODO: try catch...
 
-        SearchResult result = await search.SearchAsync(indexName, GetPagedQuery(searchTerm, filter));
+        SearchResult result = await search.SearchAsync(indexName, GetPagedQuery(filter));
 
         return result?.Documents is not null
             ? ConvertTo<T>(result.Documents).SingleOrDefault()
@@ -125,11 +123,11 @@ public static class SearchCommandsExtensions
 
         // Provide a default value of starting at
         // page 1, with 100 results per page.
-        filter ??= new SearchFilter(1, 100);
+        filter ??= new SearchFilter(page: 1, count: 100);
 
         // TODO: try catch...
 
-        IPagedList<T> results = await search.SearchAsync<T>(indexName, "*", filter);
+        IPagedList<T> results = await search.SearchAsync<T>(indexName, filter);
 
         // We must have managed to retrieve all results
         // in the first page, return them as-is.
@@ -154,7 +152,7 @@ public static class SearchCommandsExtensions
             // a transaction and execute as a batch?
             // Not too worried at the moment as it's unlikely we'll
             // have thousands of results right now at least.
-            results = await search.SearchAsync<T>(indexName, "*", filter);
+            results = await search.SearchAsync<T>(indexName, filter);
 
             documents.AddRange(results);
         }
@@ -187,38 +185,34 @@ public static class SearchCommandsExtensions
     }
 
     private static Query GetPagedQuery(
-        string searchTerm,
         SearchFilter filter,
         bool summarize = false,
         params string[] highlightFields)
     {
-        ArgumentNullException.ThrowIfNull(searchTerm);
         ArgumentNullException.ThrowIfNull(filter);
 
         Query builder;
 
         if (filter.OrderBy is not null)
         {
-            builder = GetSortedQuery(searchTerm, filter, summarize, highlightFields);
+            builder = GetSortedQuery(filter, summarize, highlightFields);
         }
         else
         {
-            builder = GetDefaultQuery(searchTerm, summarize, highlightFields);
+            builder = GetDefaultQuery(filter.Query, summarize, highlightFields);
         }
 
         return builder.Limit((filter.Page - 1) * filter.Count, filter.Count);
     }
 
     private static Query GetSortedQuery(
-        string searchTerm,
         SearchFilter filter,
         bool summarize = false,
         params string[] highlights)
     {
-        ArgumentNullException.ThrowIfNull(searchTerm);
         ArgumentNullException.ThrowIfNull(filter);
 
-        Query builder = GetDefaultQuery(searchTerm, summarize, highlights);
+        Query builder = GetDefaultQuery(filter.Query, summarize, highlights);
 
         return filter.OrderBy is not null
             ? builder.SetSortBy(filter.OrderBy, filter.SortBy is SortDirection.Ascending)
@@ -226,18 +220,16 @@ public static class SearchCommandsExtensions
     }
 
     private static Query GetDefaultQuery(
-        string searchTerm,
+        string? searchQuery,
         bool summarize = false,
         params string[] highlights)
     {
-        ArgumentNullException.ThrowIfNull(searchTerm);
-
-        Query builder = new(searchTerm);
+        Query builder = new(searchQuery ?? "*");
 
         if (highlights.Length > 0)
         {
             // https://oss.redislabs.com/redisearch/Highlight/#highlighting
-            builder.HighlightFields(new Query.HighlightTags("<span class=\"search-term-found\">", "</span>"), highlights);
+            builder.HighlightFields(new Query.HighlightTags("<span class=\"query-found\">", "</span>"), highlights);
         }
 
         // https://oss.redislabs.com/redisearch/Highlight/#summarization

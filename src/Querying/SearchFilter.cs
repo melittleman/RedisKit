@@ -72,6 +72,7 @@ public sealed record SearchFilter
 
     public SearchFilter() { }
 
+    // TODO: Should these contructors also provide the default values?
     public SearchFilter(byte count)
     {
         Count = count;
@@ -83,17 +84,35 @@ public sealed record SearchFilter
         Count = count;
     }
 
-    public SearchFilter(short page, byte count, string orderBy)
+    public SearchFilter(short page, byte count, string query)
     {
         Page = page;
         Count = count;
+        Query = query;
+    }
+
+    public SearchFilter(
+        short page, 
+        byte count, 
+        string query, 
+        string orderBy)
+    {
+        Page = page;
+        Count = count;
+        Query = query;
         OrderBy = orderBy;
     }
 
-    public SearchFilter(short page, byte count, string orderBy, SortDirection sortBy)
+    public SearchFilter(
+        short page, 
+        byte count, 
+        string query, 
+        string orderBy, 
+        SortDirection sortBy)
     {
         Page = page;
         Count = count;
+        Query = query;
         OrderBy = orderBy;
         SortBy = sortBy;
     }
