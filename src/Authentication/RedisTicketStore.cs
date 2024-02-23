@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿using System.Globalization;
+using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -16,8 +17,13 @@ namespace RedisKit.Authentication;
 /// </summary>
 public sealed record RedisTicketStore : ITicketStore
 {
-    private const string SessionId = "session_id";
+    // RFC 1123 DateTime format
+    private const string UtcDateTimeFormat = "r";
+    private const string SessionIdKey = "session_id";
+    private const string LastActivityUtcKey = ".last_activity";
 
+    // TODO: Should 'RedisJsonOptions' actually just be
+    // included as part of the TicketOptions itself?
     private readonly RedisAuthenticationTicketOptions _ticketOptions;
     private readonly RedisJsonOptions _jsonOptions;
     private readonly IRedisConnection _redis;
@@ -54,7 +60,7 @@ public sealed record RedisTicketStore : ITicketStore
         {
             key = GetKey(ticket.Principal.FindFirst(JwtClaimTypes.SessionId)?.Value);
         }
-        else if (ticket.Properties.Items.TryGetValue(SessionId, out string? value) && value is not null)
+        else if (ticket.Properties.Items.TryGetValue(SessionIdKey, out string? value) && value is not null)
         {
             key = GetKey(value);
         }
@@ -72,6 +78,8 @@ public sealed record RedisTicketStore : ITicketStore
 
         string redisKey = GetKey(key);
 
+        SetLastActivity(ticket, DateTimeOffset.UtcNow);
+
         if (await Json.SetAsync(redisKey, "$", ticket, serializerOptions: _jsonOptions.Serializer))
         {
             if (ticket.Properties.ExpiresUtc.HasValue)
@@ -82,11 +90,22 @@ public sealed record RedisTicketStore : ITicketStore
     }
 
     /// <inheritdoc />
-    public Task<AuthenticationTicket?> RetrieveAsync(string key)
+    public async Task<AuthenticationTicket?> RetrieveAsync(string key)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        return Json.GetAsync<AuthenticationTicket>(GetKey(key), serializerOptions: _jsonOptions.Serializer);
+        AuthenticationTicket? ticket = await Json.GetAsync<AuthenticationTicket>(GetKey(key), serializerOptions: _jsonOptions.Serializer);
+
+        if (ticket is not null)
+        {
+            // TODO: This ".last_activity" value is not actually being
+            // persisted back into the store. Need to work out if this
+            // would be too much IO overhead or not, as it does mean we
+            // won't be able to report accurately on a user's last activity.
+            SetLastActivity(ticket, DateTimeOffset.UtcNow);
+        }
+
+        return ticket;
     }
 
     /// <inheritdoc />
@@ -109,11 +128,42 @@ public sealed record RedisTicketStore : ITicketStore
         }
     }
 
+    // Copied from 'AuthenticationProperties' to keep format of date items the same.
+    public static DateTimeOffset? GetLastActivity(AuthenticationTicket ticket)
+    {
+        if (ticket.Properties.Items.TryGetValue(LastActivityUtcKey, out string? value) && DateTimeOffset.TryParseExact(
+            value,
+            UtcDateTimeFormat,
+            CultureInfo.InvariantCulture,
+            DateTimeStyles.RoundtripKind,
+            out DateTimeOffset dto))
+        {
+            return dto;
+        }
+
+        return null;
+    }
+
     #region Private Methods
 
     private string GetKey(string? key) => string.IsNullOrWhiteSpace(key) is false && key?.StartsWith(KeyPrefix) is true
         ? key
         : KeyPrefix + key;
+
+    // Copied from 'AuthenticationProperties' to keep format of date items the same.
+    private static void SetLastActivity(AuthenticationTicket ticket, DateTimeOffset? value)
+    {
+        if (value.HasValue)
+        {
+            // TODO: Do we need to worry about thread safety here? 
+            // The base implementation in 'AuthenticationProperties' doesn't seem to care, so maybe it's fine...
+            ticket.Properties.Items[LastActivityUtcKey] = value.GetValueOrDefault().ToString(UtcDateTimeFormat, CultureInfo.InvariantCulture);
+        }
+        else
+        {
+            ticket.Properties.Items.Remove(LastActivityUtcKey);
+        }
+    }
 
     #endregion
 }
