@@ -17,6 +17,7 @@ using RedisKit.Messaging;
 using RedisKit.Messaging.Constants;
 using RedisKit.Messaging.Abstractions;
 using RedisKit.Json.Converters;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace RedisKit.DependencyInjection.Extensions;
 
@@ -100,19 +101,22 @@ public static class RedisConnectionBuilderExtensions
             builder.Services.Configure(builder.Name, configure);
             configure.Invoke(ticketOptions);
         }
+
+        builder.Services.AddMemoryCache();
         
         // TODO: Should we look into 'TryAddKeyedTransient' here?
         // Means we could theoretically support multiple different ticket store implementations.
         // e.g. External Auth Schemes like GitHub, Microsoft etc. vs the internal Auth Scheme.
         builder.Services.TryAddTransient<ITicketStore>(s =>
         {
+            IMemoryCache cache = s.GetRequiredService<IMemoryCache>();
             IRedisConnectionProvider provider = s.GetRequiredService<IRedisConnectionProvider>();
             IOptionsMonitor<RedisJsonOptions> optionsMonitor = s.GetRequiredService<IOptionsMonitor<RedisJsonOptions>>();
 
             IRedisConnection connection = provider.GetRequiredConnection(builder.Name);
             RedisJsonOptions jsonOptions = optionsMonitor.Get(builder.Name);
 
-            return new RedisTicketStore(connection, ticketOptions, jsonOptions);
+            return new RedisTicketStore(connection, ticketOptions, jsonOptions, cache);
         });
 
         builder.Services.AddOptions<CookieAuthenticationOptions>(ticketOptions.CookieSchemeName).Configure<ITicketStore>((options, store) =>

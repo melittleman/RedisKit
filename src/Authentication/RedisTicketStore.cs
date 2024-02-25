@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Caching.Memory;
 
 using IdentityModel;
 
@@ -23,11 +24,15 @@ public sealed record RedisTicketStore : ITicketStore
     private const string SessionIdKey = "session_id";
     private const string LastActivityUtcKey = ".last_activity";
 
+    // TODO: Configuration or constant?
+    private static readonly TimeSpan _cacheExpiry = TimeSpan.FromSeconds(5);
+
     // TODO: Should 'RedisJsonOptions' actually just be
     // included as part of the TicketOptions itself?
     private readonly RedisAuthenticationTicketOptions _ticketOptions;
     private readonly RedisJsonOptions _jsonOptions;
     private readonly IRedisConnection _redis;
+    private readonly IMemoryCache _cache;
 
     private JsonNamingPolicy Naming => _jsonOptions.Serializer.PropertyNamingPolicy
         ?? JsonSerializerOptions.Default.PropertyNamingPolicy
@@ -42,14 +47,16 @@ public sealed record RedisTicketStore : ITicketStore
     public RedisTicketStore(
         IRedisConnection redis,
         RedisAuthenticationTicketOptions ticketOptions,
-        RedisJsonOptions jsonOptions)
+        RedisJsonOptions jsonOptions,
+        IMemoryCache cache)
     {
         _redis = redis ?? throw new ArgumentNullException(nameof(redis));
-        _ticketOptions = ticketOptions ?? throw new ArgumentNullException(nameof(ticketOptions));
+        _cache = cache ?? throw new ArgumentNullException(nameof(cache));
 
         // The RedisJsonOptions 'should' always contain an instance of AuthenticationTicketJsonConverter
         // if the .AddRedisTicketStore extension was used, but should we actually be checking this?
         _jsonOptions = jsonOptions ?? throw new ArgumentNullException(nameof(jsonOptions));
+        _ticketOptions = ticketOptions ?? throw new ArgumentNullException(nameof(ticketOptions));
     }
 
     /// <inheritdoc />
@@ -93,6 +100,11 @@ public sealed record RedisTicketStore : ITicketStore
             {
                 Db.KeyExpire(redisKey, ticket.Properties.ExpiresUtc.Value.UtcDateTime);
             }
+
+            // We only ever need to set the cached ticket to a very short expiration
+            // just to ease the network IO out to Redis when the ticket store is hit a
+            // number of times in a row, for example on an initial page load. 
+            _cache.Set(redisKey, ticket, _cacheExpiry);
         }
     }
 
@@ -101,18 +113,28 @@ public sealed record RedisTicketStore : ITicketStore
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
+        string redisKey = GetKey(key);
+        DateTimeOffset lastActivity = DateTimeOffset.UtcNow;
+
+        // Try hit the memory cache first for performance optimization.
+        if (_cache.TryGetValue(redisKey, out AuthenticationTicket? ticket) && ticket is not null)
+        {
+            SetLastActivity(ticket, lastActivity);
+            return ticket;
+        }
+
         string properties = Naming.ConvertName(nameof(AuthenticationTicket.Properties));
         string items = Naming.ConvertName(nameof(AuthenticationTicket.Properties.Items));
 
-        // TODO: You could argue that this property name conversion isn't actually required, because simply using
+        // You could argue that this property name conversion isn't actually required, because simply using
         // the JSON Path "$..['.last_activity'] would also find it, but there's more of a clashing risk with this.
-        Task<bool> setTask = Json.SetAsync(
-            GetKey(key), 
-            $"$.{properties}.{items}['{LastActivityUtcKey}']",
-            DateTimeOffset.UtcNow, 
-            serializerOptions: _jsonOptions.Serializer);
+        string jsonPath = $"$.{properties}.{items}['{LastActivityUtcKey}']";
 
-        Task<AuthenticationTicket?> getTask = Json.GetAsync<AuthenticationTicket>(GetKey(key), serializerOptions: _jsonOptions.Serializer);
+        // TODO: Can this set task cause an exception when the key doesn't exist? I think it can,
+        // which means we need a way to capture this exception and continue even when it fails.
+        Task<bool> setTask = Json.SetAsync(redisKey, jsonPath, lastActivity, serializerOptions: _jsonOptions.Serializer);
+
+        Task<AuthenticationTicket?> getTask = Json.GetAsync<AuthenticationTicket>(redisKey, serializerOptions: _jsonOptions.Serializer);
 
         // All these 'Pipelining' methods send the commands over to the server in one network operation, but differ by the below:
         // TPL: No guarantee of interleaving.
@@ -123,7 +145,9 @@ public sealed record RedisTicketStore : ITicketStore
 
         // Task will have already been completed by this point so this await should return
         // immediately. We might want to consider using .Result here also if it's quicker?
-        return await getTask;
+        ticket = await getTask;
+
+        return _cache.Set(redisKey, ticket, _cacheExpiry);
     }
 
     /// <inheritdoc />
@@ -140,9 +164,12 @@ public sealed record RedisTicketStore : ITicketStore
 
         if (string.IsNullOrWhiteSpace(ticket.Properties.GetTokenValue(OidcConstants.TokenTypes.RefreshToken)))
         {
+            string redisKey = GetKey(key);
+
             // We can only remove an "Authentication Ticket" when it does NOT have the 'refresh_token'
             // present, as this needs to go through the token revocation process on logout.
-            await Db.KeyDeleteAsync(GetKey(key));
+            _ = await Db.KeyDeleteAsync(redisKey);
+            _cache.Remove(redisKey);
         }
     }
 
