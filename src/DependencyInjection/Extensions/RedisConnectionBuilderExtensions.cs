@@ -94,8 +94,16 @@ public static class RedisConnectionBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
 
         RedisAuthenticationTicketOptions ticketOptions = new();
-        configure?.Invoke(ticketOptions);
 
+        if (configure is not null)
+        {
+            builder.Services.Configure(builder.Name, configure);
+            configure.Invoke(ticketOptions);
+        }
+        
+        // TODO: Should we look into 'TryAddKeyedTransient' here?
+        // Means we could theoretically support multiple different ticket store implementations.
+        // e.g. External Auth Schemes like GitHub, Microsoft etc. vs the internal Auth Scheme.
         builder.Services.TryAddTransient<ITicketStore>(s =>
         {
             IRedisConnectionProvider provider = s.GetRequiredService<IRedisConnectionProvider>();
