@@ -60,6 +60,7 @@ public static class SearchCommandsExtensions
         this SearchCommands search,
         string indexName,
         SearchFilter filter,
+        JsonSerializerOptions? options = null,
         params string[] highlightFields)
     {
         ArgumentNullException.ThrowIfNull(search);
@@ -73,7 +74,7 @@ public static class SearchCommandsExtensions
             SearchResult result = await search.SearchAsync(indexName, query);
 
             return result?.Documents is not null
-                ? ConvertTo<T>(result.Documents).ToPagedList(result.TotalResults, filter)
+                ? ConvertTo<T>(result.Documents, options).ToPagedList(result.TotalResults, filter)
                 : new PagedList<T>(Array.Empty<T>(), 0, filter);
         }
         catch (Exception)
@@ -82,7 +83,11 @@ public static class SearchCommandsExtensions
         }
     }
 
-    public static async Task<T?> SearchSingleAsync<T>(this SearchCommands search, string indexName, string searchQuery)
+    public static async Task<T?> SearchSingleAsync<T>(
+        this SearchCommands search,
+        string indexName, 
+        string searchQuery,
+        JsonSerializerOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(search);
         ArgumentNullException.ThrowIfNull(indexName);
@@ -95,7 +100,7 @@ public static class SearchCommandsExtensions
         SearchResult result = await search.SearchAsync(indexName, GetPagedQuery(filter));
 
         return result?.Documents is not null
-            ? ConvertTo<T>(result.Documents).SingleOrDefault()
+            ? ConvertTo<T>(result.Documents, options).SingleOrDefault()
             : default;
     }
 
@@ -116,7 +121,11 @@ public static class SearchCommandsExtensions
     ///     of documents contained within the index. This will gradually step through each
     ///     page to build up the result set.
     /// </remarks>
-    public static async Task<ICollection<T>> SearchAllAsync<T>(this SearchCommands search, string indexName, SearchFilter? filter = null)
+    public static async Task<ICollection<T>> SearchAllAsync<T>(
+        this SearchCommands search,
+        string indexName, 
+        SearchFilter? filter = null,
+        JsonSerializerOptions? options = null)
     {
         ArgumentNullException.ThrowIfNull(search);
         ArgumentNullException.ThrowIfNull(indexName);
@@ -125,9 +134,7 @@ public static class SearchCommandsExtensions
         // page 1, with 100 results per page.
         filter ??= new SearchFilter(page: 1, count: 100);
 
-        // TODO: try catch...
-
-        IPagedList<T> results = await search.SearchAsync<T>(indexName, filter);
+        IPagedList<T> results = await search.SearchAsync<T>(indexName, filter, options);
 
         // We must have managed to retrieve all results
         // in the first page, return them as-is.
@@ -243,7 +250,7 @@ public static class SearchCommandsExtensions
         return builder;
     }
 
-    private static List<T> ConvertTo<T>(ICollection<Document> documents)
+    private static List<T> ConvertTo<T>(ICollection<Document> documents, JsonSerializerOptions? options = null)
     {
         List<T> results = [];
 
@@ -262,7 +269,7 @@ public static class SearchCommandsExtensions
             if (json is not null)
             {
                 // This indexed document is stored as JSON
-                result = JsonSerializer.Deserialize<T>(json);
+                result = JsonSerializer.Deserialize<T>(json, options);
             }
             else
             {
