@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Text.Json;
+using System.Globalization;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Authentication;
@@ -27,6 +28,10 @@ public sealed record RedisTicketStore : ITicketStore
     private readonly RedisAuthenticationTicketOptions _ticketOptions;
     private readonly RedisJsonOptions _jsonOptions;
     private readonly IRedisConnection _redis;
+
+    private JsonNamingPolicy Naming => _jsonOptions.Serializer.PropertyNamingPolicy
+        ?? JsonSerializerOptions.Default.PropertyNamingPolicy
+        ?? JsonNamingPolicy.SnakeCaseLower;
 
     private IDatabase Db => _redis.Db;
 
@@ -80,6 +85,8 @@ public sealed record RedisTicketStore : ITicketStore
 
         SetLastActivity(ticket, DateTimeOffset.UtcNow);
 
+        // TODO: Implement a pipeline for these two requests, not super important
+        // though as this is a very 'cold' path that is not frequently used.
         if (await Json.SetAsync(redisKey, "$", ticket, serializerOptions: _jsonOptions.Serializer))
         {
             if (ticket.Properties.ExpiresUtc.HasValue)
@@ -94,18 +101,29 @@ public sealed record RedisTicketStore : ITicketStore
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
 
-        AuthenticationTicket? ticket = await Json.GetAsync<AuthenticationTicket>(GetKey(key), serializerOptions: _jsonOptions.Serializer);
+        string properties = Naming.ConvertName(nameof(AuthenticationTicket.Properties));
+        string items = Naming.ConvertName(nameof(AuthenticationTicket.Properties.Items));
 
-        if (ticket is not null)
-        {
-            // TODO: This ".last_activity" value is not actually being
-            // persisted back into the store. Need to work out if this
-            // would be too much IO overhead or not, as it does mean we
-            // won't be able to report accurately on a user's last activity.
-            SetLastActivity(ticket, DateTimeOffset.UtcNow);
-        }
+        // TODO: You could argue that this property name conversion isn't actually required, because simply using
+        // the JSON Path "$..['.last_activity'] would also find it, but there's more of a clashing risk with this.
+        Task<bool> setTask = Json.SetAsync(
+            GetKey(key), 
+            $"$.{properties}.{items}['{LastActivityUtcKey}']",
+            DateTimeOffset.UtcNow, 
+            serializerOptions: _jsonOptions.Serializer);
 
-        return ticket;
+        Task<AuthenticationTicket?> getTask = Json.GetAsync<AuthenticationTicket>(GetKey(key), serializerOptions: _jsonOptions.Serializer);
+
+        // All these 'Pipelining' methods send the commands over to the server in one network operation, but differ by the below:
+        // TPL: No guarantee of interleaving.
+        // Batching: Guarantees no other commands through this multiplexer will be interleaved.
+        // Transaction: Guarantees no other commands can be interleaved at the server level, i.e. fully atomic.
+        // See: https://stackexchange.github.io/StackExchange.Redis/PipelinesMultiplexers.html
+        await Task.WhenAll(setTask, getTask);
+
+        // Task will have already been completed by this point so this await should return
+        // immediately. We might want to consider using .Result here also if it's quicker?
+        return await getTask;
     }
 
     /// <inheritdoc />
