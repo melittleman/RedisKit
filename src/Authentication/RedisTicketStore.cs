@@ -98,7 +98,9 @@ public sealed record RedisTicketStore : ITicketStore
         {
             if (ticket.Properties.ExpiresUtc.HasValue)
             {
-                Db.KeyExpire(redisKey, ticket.Properties.ExpiresUtc.Value.UtcDateTime);
+                // TODO: Do we care about failure here?
+                // It does mean that the user could technically be logged in forever...
+                _ = await Db.KeyExpireAsync(redisKey, ticket.Properties.ExpiresUtc.Value.UtcDateTime);
             }
 
             // We only ever need to set the cached ticket to a very short expiration
@@ -106,6 +108,8 @@ public sealed record RedisTicketStore : ITicketStore
             // number of times in a row, for example on an initial page load. 
             _cache.Set(redisKey, ticket, _cacheExpiry);
         }
+
+        // TODO: Probably need to add some logging into here for failures / errors etc.
     }
 
     /// <inheritdoc />
@@ -132,7 +136,11 @@ public sealed record RedisTicketStore : ITicketStore
 
         // TODO: Can this set task cause an exception when the key doesn't exist? I think it can,
         // which means we need a way to capture this exception and continue even when it fails.
-        Task<bool> setTask = Json.SetAsync(redisKey, jsonPath, lastActivity, serializerOptions: _jsonOptions.Serializer);
+        Task<bool> setTask = Json.SetAsync(
+            redisKey, 
+            jsonPath, 
+            lastActivity.ToString(UtcDateTimeFormat, CultureInfo.InvariantCulture), 
+            serializerOptions: _jsonOptions.Serializer);
 
         Task<AuthenticationTicket?> getTask = Json.GetAsync<AuthenticationTicket>(redisKey, serializerOptions: _jsonOptions.Serializer);
 
